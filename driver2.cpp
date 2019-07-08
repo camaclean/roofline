@@ -132,6 +132,13 @@ public:
           };
         program = nersc::load_program<DeviceSelector,CodeType>(context,device,"kernel${trial_config}",kernel_params);
         ocl_kernel = new ert_kernel_type<TrialConfig>(program, "ocl_kernel");
+#ifdef HEADER
+        {
+  
+            printf("%12s %12s %15s %12s %12s %12s %12s\n", 
+                "nsize", "trials", "microsecs", "bytes", "flops", "GB/s", "GF/s");
+        }
+#endif
     }
 
     void run(uint64_t working_set_min = 1)
@@ -195,7 +202,7 @@ public:
                     std::chrono::duration<double,std::micro>(seconds).count(),
                     total_bytes,
                     total_flops,
-                    total_bytes/seconds.count()/1_Gi,
+                    total_bytes/seconds.count()/1e9,
                     total_flops/seconds.count()/1e9);
 
                 verify<T>(PSIZE, t, n);
@@ -280,13 +287,6 @@ int main(int argc, char *argv[]) {
     wg_size=0;  // let the OpenCL runtime decide
   }
 
-#ifdef HEADER
-  {
-
-    printf("%12s %12s %15s %12s %12s %12s %12s\n", 
-      "nsize", "trials", "microsecs", "bytes", "flops", "GiB/s", "GF/s");
-  }
-#endif
 
   std::cout << "Flops: 1" << std::endl;
   {
