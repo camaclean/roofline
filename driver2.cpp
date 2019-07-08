@@ -100,7 +100,7 @@ private:
     };
 
 public:
-    roofline(uint wg_size, uint32_t ert_flops=1) 
+    roofline(uint wg_size, uint32_t ert_flops=1, uint64_t trials_min=1) 
       : context{}
       , device {}
       , program{}
@@ -110,6 +110,7 @@ public:
       , desired_wg_size{wg_size}
       , wg_size{}
       , ert_flops{ert_flops}
+      , trials_min{trials_min}
       , ocl_kernel{}
     {};
 
@@ -133,7 +134,7 @@ public:
         ocl_kernel = new ert_kernel_type<TrialConfig>(program, "ocl_kernel");
     }
 
-    void run(uint64_t working_set_min = 1024)
+    void run(uint64_t working_set_min = 1)
     {
         uint64_t n;
         uint64_t t;
@@ -162,7 +163,7 @@ public:
             d_params = cl::Buffer(context, begin(params), end(params), false);
 
             // loop through increasing numbers of trials
-            for (t = ERT_TRIALS_MIN; t <= ntrials; t = t * 2) { // working set - ntrials
+            for (t = trials_min; t <= ntrials; t = t * 2) { // working set - ntrials
 
                 // move fresh buffer to device for each trial
                 d_buf = cl::Buffer(context, std::begin(buf), std::begin(buf)+n, false, false);
@@ -197,9 +198,9 @@ public:
                     total_bytes/seconds.count()/1_Gi,
                     total_flops/seconds.count()/1e9);
 
+                verify<T>(PSIZE, t, n);
             } // working set - ntrials
         
-            verify<T>(PSIZE, t, n);
 
             n *= 2; //1.1;
 
@@ -229,8 +230,13 @@ public:
         cl::copy(queue, d_buf, begin(bufv), begin(bufv)+n);
         for (size_t i=0; i<t; ++i) {
             beta = result*factor;
-            for (size_t j=0; j<ert_flops/2; ++j) {
-                beta=beta*result+alpha;
+            if (ert_flops == 1)
+            {
+                beta = result+alpha;
+            } else {
+                for (size_t j=0; j<ert_flops/2; ++j) {
+                    beta=beta*result+alpha;
+                }
             }
             result = beta;
         }
@@ -254,6 +260,7 @@ private:
     uint desired_wg_size;
     uint wg_size;
     uint32_t ert_flops;
+    uint64_t trials_min;
     kernel_type* ocl_kernel;
 };
 
