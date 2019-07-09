@@ -19,18 +19,22 @@
 //#define ERT_FLOP 256
 #endif
 
+#ifndef TYPE
+#define TYPE double
+#endif
+
 __kernel void ocl_kernel(
             const ulong trials,
-            __global double* A,
+            __global TYPE* A,
             __global int* params)
 {
-  const double epsilon=1e-6;
-  const double factor=(1.0 - epsilon);
-  double alpha = -epsilon;
+  const TYPE epsilon=1e-6;
+  const TYPE factor=(1.0 - epsilon);
+  TYPE alpha = -epsilon;
 
   for (ulong j=0; j<trials; ++j) {
     size_t i = get_global_id(0);
-    double beta = A[i]*factor;
+    TYPE beta = A[i]*factor;
 
 #if (ERT_FLOP & 1) == 1       /* add 1 flop */
       KERNEL1(beta,A[i],alpha);

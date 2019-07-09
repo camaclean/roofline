@@ -60,6 +60,36 @@ struct ert_kernel_type_selector<trial_config::queued>
     using type = cl::KernelFunctor<cl::Buffer, cl::Buffer>;
 };
 
+template<typename T>
+struct type_param;
+
+template<typename T>
+inline constexpr const char* type_param_v = type_param<T>::value;
+
+template<>
+struct type_param<double>
+{
+    static constexpr const char value[] = "double";
+};
+
+template<>
+struct type_param<float>
+{
+    static constexpr const char value[] = "float";
+};
+
+template<>
+struct type_param<int>
+{
+    static constexpr const char value[] = "int";
+};
+
+template<>
+struct type_param<long>
+{
+    static constexpr const char value[] = "long";
+};
+
 //#define ERT_MEMORY_MAX ((uint64_t)8*1024*1024*1024)
 //#define ERT_ALIGN 32
 //#define ERT_WORKING_SET_MIN 8192
@@ -75,6 +105,11 @@ template<typename T, trial_config TrialConfig, size_t MemoryMax = 8_Gi, size_t A
 class roofline
 {
 public:
+    template<nersc::code_type CodeType>
+    static constexpr const char* kernel_name_format = 
+        (CodeType == nersc::code_type::source) ? 
+            "kernel${trial_config}" : "kernel_${trial_config}_${ert_flop}_${type}";
+
     using kernel_type = ert_kernel_type<TrialConfig>;
 
 private:
@@ -127,10 +162,11 @@ public:
 
         std::map<std::string, std::string> kernel_params = 
           {
+              {"type", type_param_v<T>},
               {"trial_config",trial_config_name_v<TrialConfig>},
               {"ert_flop",std::to_string(ert_flops)}
           };
-        program = nersc::load_program<DeviceSelector,CodeType>(context,device,"kernel${trial_config}",kernel_params);
+        program = nersc::load_program<DeviceSelector,CodeType>(context,device,kernel_name_format<CodeType>,kernel_params);
         ocl_kernel = new ert_kernel_type<TrialConfig>(program, "ocl_kernel");
 #ifdef HEADER
         {
@@ -153,7 +189,6 @@ public:
 
         std::vector<T> buf(PSIZE/sizeof(T));
         std::vector<int> params(3);
-
 
         // initialize the data buffer
         std::fill(buf.begin(),buf.end(),1.0);
@@ -271,6 +306,31 @@ private:
     kernel_type* ocl_kernel;
 };
 
+template<nersc::device_selector DeviceSelector, trial_config TrialConfig, size_t MemoryMax>
+struct roofline_type_runner
+{
+    template<typename T>
+    static void run_impl(const std::vector<uint>& wg_sizes, const std::vector<uint32_t>& flops)
+    {
+        for (auto & f : flops )
+        {
+            for (auto& wg_size : wg_sizes)
+            {
+                std::cout << "Workgroup size: " << wg_size << " Flops: " << f << std::endl;
+                roofline<T,TrialConfig,MemoryMax> roofline(wg_size,f);
+                roofline.template init<DeviceSelector>();
+                roofline.run();
+            }
+        }
+    }
+
+    template<typename... Ts>
+    static void run(const std::vector<uint>& wg_sizes, const std::vector<uint32_t>& flops)
+    {
+        (run_impl<Ts>(wg_sizes,flops), ...);
+    }
+};
+
 int main(int argc, char *argv[]) {
   constexpr nersc::device_selector DeviceSelector = nersc::device_selector::autoselect;
   constexpr nersc::code_type CodeType = nersc::code_type::source;
@@ -287,26 +347,10 @@ int main(int argc, char *argv[]) {
     wg_size=0;  // let the OpenCL runtime decide
   }
 
+  std::vector<uint> wg_sizes = {1};
+  std::vector<uint32_t> flop_trials = {1,256};
 
-  std::cout << "Flops: 1" << std::endl;
-  {
-      roofline<double,TrialConfig,MemoryMax> roofline(wg_size,1);
-      roofline.init<DeviceSelector>();
-      roofline.run();
-  }
-  std::cout << "================================" << std::endl;
-  std::cout << "Flops: 2" << std::endl;
-  {
-      roofline<double,TrialConfig,MemoryMax> roofline(wg_size,2);
-      roofline.init<DeviceSelector>();
-      roofline.run();
-  }
-  std::cout << "================================" << std::endl;
-  std::cout << "Flops: 256" << std::endl;
-  {
-      roofline<double,TrialConfig,MemoryMax> roofline(wg_size,256);
-      roofline.init<DeviceSelector>();
-      roofline.run();
-  }
+  roofline_type_runner<DeviceSelector,TrialConfig,MemoryMax>::run<float,double>(wg_sizes, flop_trials);
+
   return 0;
 }
