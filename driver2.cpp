@@ -3,6 +3,7 @@
 #include "kernel.h"
 #include <cmath>
 #include "cl_test_framework.hpp"
+#include <set>
 
 #ifndef DEVICE
 #  define DEVICE CL_DEVICE_TYPE_DEFAULT
@@ -14,7 +15,7 @@
 #define KERNEL 1 // 1 or 2
 #endif
 
-using nersc::operator""_Ki, nersc::operator""_Mi, nersc::operator""_Gi;
+using namespace nersc::literals;
 
 enum class trial_config
 {
@@ -101,13 +102,93 @@ struct type_param<long>
 #define HEADER
 #undef VERIFY
 
-template<typename T, trial_config TrialConfig, size_t MemoryMax = 8_Gi, size_t Align=32>
+struct roofline_results
+{
+    //GCC is having problems with = default for some strange reason
+    constexpr roofline_results()
+        : nsize{}
+        , trials{}
+        , seconds{}
+        , total_bytes{}
+        , total_flops{}
+    {}
+    constexpr roofline_results(const roofline_results&) = default;
+    constexpr roofline_results(roofline_results&&) = default;
+    constexpr roofline_results(
+            size_t nsize,
+            uint64_t trials,
+            const std::chrono::duration<double>& seconds,
+            uint64_t total_bytes,
+            uint64_t total_flops)
+        : nsize{nsize}
+        , trials{trials}
+        , seconds{seconds}
+        , total_bytes{total_bytes}
+        , total_flops{total_flops}
+    {}
+
+    size_t nsize;
+    uint64_t trials;
+    std::chrono::duration<double> seconds;
+    uint64_t total_bytes;
+    uint64_t total_flops;
+};
+
+constexpr bool operator<(const roofline_results& lhs, const roofline_results& rhs) noexcept
+{
+    return std::tie(lhs.nsize,lhs.trials,lhs.seconds,lhs.total_bytes,lhs.total_flops) < std::tie(rhs.nsize,rhs.trials,rhs.seconds,rhs.total_bytes,rhs.total_flops);
+}
+
+struct roofline_config
+{
+    constexpr roofline_config() noexcept
+        : type{""}
+        , device_selector{nersc::device_selector::autoselect}
+        , trialconfig{trial_config::coalesced}
+        , memory_max{}
+        , align{}
+    {}
+    constexpr roofline_config(const roofline_config&) = default;
+    constexpr roofline_config(roofline_config&&) = default;
+    constexpr roofline_config(
+            const char *type,
+            nersc::device_selector device_selector,
+            trial_config trialconfig,
+            size_t memory_max,
+            size_t align) noexcept
+        : type{type}
+        , device_selector{device_selector}
+        , trialconfig{trialconfig}
+        , memory_max{memory_max}
+        , align{align}
+    {}
+    const char *type;
+    nersc::device_selector device_selector;
+    trial_config trialconfig;
+    size_t memory_max;
+    size_t align;
+};
+
+bool operator<(const roofline_config& lhs, const roofline_config& rhs) noexcept
+{
+    int typeres = std::strcmp(lhs.type,rhs.type);
+    if (typeres < 0)
+        return true;
+    else if (typeres > 0)
+        return false;
+    else
+        return std::tie(lhs.device_selector,lhs.trialconfig,lhs.memory_max,lhs.align) < std::tie(rhs.device_selector,rhs.trialconfig,rhs.memory_max,rhs.align);
+}
+
+template<typename T, nersc::device_selector DeviceSelector, trial_config TrialConfig, size_t MemoryMax = 8_Gi, size_t Align=32, nersc::code_type CodeType = nersc::default_device_code_type_v<DeviceSelector>>
 class roofline
 {
 public:
-    template<nersc::code_type CodeType>
+    using result_type = roofline_results;
+
+    template<nersc::code_type CT = CodeType>
     static constexpr const char* kernel_name_format = 
-        (CodeType == nersc::code_type::source) ? 
+        (CT == nersc::code_type::source) ? 
             "kernel${trial_config}" : "kernel_${trial_config}_${ert_flop}_${type}";
 
     using kernel_type = ert_kernel_type<TrialConfig>;
@@ -147,10 +228,18 @@ public:
       , ert_flops{ert_flops}
       , trials_min{trials_min}
       , ocl_kernel{}
-    {};
+      , res{
+          {
+              type_param_v<T>,
+              DeviceSelector,
+              TrialConfig,
+              MemoryMax,
+              Align
+          },
+          {}
+        }
 
-    template<nersc::device_selector DeviceSelector, nersc::code_type CodeType = nersc::default_device_code_type_v<DeviceSelector>>
-    void init()
+              
     {
         std::tie(context,device) = nersc::init_opencl<DeviceSelector>();
         uint max_wg_size = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
@@ -168,15 +257,15 @@ public:
           };
         program = nersc::load_program<DeviceSelector,CodeType>(context,device,kernel_name_format<CodeType>,kernel_params);
         ocl_kernel = new ert_kernel_type<TrialConfig>(program, "ocl_kernel");
-#ifdef HEADER
-        {
-  
-            printf("%12s %12s %15s %12s %12s %12s %12s\n", 
-                "nsize", "trials", "microsecs", "bytes", "flops", "GB/s", "GF/s");
-        }
-#endif
     }
 
+    void print_header() noexcept
+    {
+        printf("%12s %12s %15s %12s %12s %12s %12s\n", 
+            "nsize", "trials", "microsecs", "bytes", "flops", "GB/s", "GF/s");
+    }
+
+    template<bool Verify>
     void run(uint64_t working_set_min = 1)
     {
         uint64_t n;
@@ -230,7 +319,7 @@ public:
                 uint64_t total_bytes = t * working_set_size * bytes_per_elem * mem_accesses_per_elem;
                 uint64_t total_flops = t * working_set_size * ert_flops;
 
-                // nsize; trials; microseconds; bytes; flops; GiB/s, GiF/s
+                // nsize; trials; microseconds; bytes; flops; GB/s, GiF/s
                 printf("%12lu %12lu %15.3lf %12lu %12lu %12.3f %12.3f\n",
                     working_set_size * bytes_per_elem,
                     t,
@@ -240,7 +329,10 @@ public:
                     total_bytes/seconds.count()/1e9,
                     total_flops/seconds.count()/1e9);
 
-                verify<T>(PSIZE, t, n);
+                std::get<1>(res).emplace_back(working_set_size*bytes_per_elem, t, seconds, total_bytes, total_flops);
+
+                if constexpr (Verify)
+                    verify<T>(PSIZE, t, n);
             } // working set - ntrials
         
 
@@ -291,6 +383,8 @@ public:
         return true;
     }
 
+    std::pair<roofline_config, std::vector<roofline_results>> results() const noexcept { return res; }
+
     ~roofline() { delete ocl_kernel; }
 private:
     cl::Context context;
@@ -304,8 +398,10 @@ private:
     uint32_t ert_flops;
     uint64_t trials_min;
     kernel_type* ocl_kernel;
+    std::pair<roofline_config, std::vector<roofline_results>> res;
 };
 
+/*
 template<nersc::device_selector DeviceSelector, trial_config TrialConfig, size_t MemoryMax>
 struct roofline_type_runner
 {
@@ -329,28 +425,304 @@ struct roofline_type_runner
     {
         (run_impl<Ts>(wg_sizes,flops), ...);
     }
+};*/
+
+
+/*
+namespace impl {
+
+template<typename, typename Experiment, typename...RuntimeParams>
+struct experiment_has_init_function_impl : std::false_type {};
+
+template<typename Experiment, typename...RuntimeParams>
+struct experiment_has_init_function_impl<
+    std::void_t<decltype(std::declval<Experiment>().template init(std::declval<RuntimeParams>()...))>,
+    Experiment, RuntimeParams...> : std::true_type {};
+
+}
+
+template<typename Experiment, typename... RuntimeParams>
+using experiment_has_init_function = impl::experiment_has_init_function_impl<void,Experiment,RuntimeParams...>;
+
+template<typename Experiment, typename... RuntimeParams>
+inline constexpr bool experiment_has_init_function_v = experiment_has_init_function<Experiment,RuntimeParams...>::value;
+
+template<typename Experiment, typename... RuntimeParams>
+auto init_experiment(Experiment&& e, RuntimeParams&&... params)
+    -> std::enable_if_t<experiment_has_init_function_v<Experiment&&,RuntimeParams&&...>>
+{
+    std::forward<Experiment>(e).template init(std::forward<RuntimeParams>(params)...);
+}
+
+template<typename Experiment, typename... RuntimeParams>
+auto init_experiment(Experiment&& e, RuntimeParams&&... params)
+    -> std::enable_if_t<!experiment_has_init_function_v<Experiment&&,RuntimeParams&&...>>
+{}
+*/
+
+template<typename Experiment, typename=void>
+struct experiment_has_results : std::false_type {};
+
+template<typename Experiment>
+struct experiment_has_results<Experiment, std::void_t<decltype(std::declval<Experiment>().results())>> : std::true_type {};
+
+template<typename Experiment>
+inline constexpr bool experiment_has_results_v = experiment_has_results<Experiment>::value;
+
+
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment(RuntimeParams&&... params)
+{
+    Experiment e(std::forward<RuntimeParams>(params)...);
+    e.template run<Verify>();
+    if constexpr (experiment_has_results_v<Experiment>)
+        return e.results();
+}
+
+template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I == std::tuple_size_v<RuntimeParams>>* = nullptr>
+void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
+{
+    if constexpr (experiment_has_results_v<Experiment>)
+    {
+        results->emplace(conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...));
+    } else {
+        conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...);
+    }
+}
+
+template<template<typename...> typename T, typename U>
+struct is_same_template : std::false_type {};
+
+template<template<typename...> typename T,  typename... Us>
+struct is_same_template<T,T<Us...>> : std::true_type {};
+
+
+template<template<typename...> typename T, typename U>
+inline constexpr bool is_same_template_v = is_same_template<T,U>::value;
+
+namespace impl {
+
+template<typename T,typename=void>
+struct is_iterable_impl : std::false_type {};
+
+using std::begin;
+using std::end;
+
+template<typename T>
+struct is_iterable_impl<T,std::void_t<
+    decltype(begin(std::declval<T&>()) != end(std::declval<T&>())),
+    decltype(++begin(std::declval<T&>())),
+    decltype(*begin(std::declval<T&>()))>>
+    : std::true_type {};
+
+}
+
+template<typename T>
+using is_iterable = impl::is_iterable_impl<T>;
+
+template<typename T>
+inline constexpr bool is_iterable_v = is_iterable<T>::value;
+
+template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I != std::tuple_size_v<RuntimeParams>>* = nullptr>
+void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
+{
+    using param_type = std::remove_reference_t<std::tuple_element_t<I,RuntimeParams>>; 
+    if constexpr (is_iterable_v<param_type>)
+    {
+        for (auto& param : std::get<I>(std::forward<RuntimeParams>(params)))
+        {
+            conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., param);
+        }
+    } else {
+        conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., std::get<I>(std::forward<RuntimeParams>(params)));
+    }
+}
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment_runtime_ensemble(RuntimeParams&&... params)
+{
+    using results_type = decltype(std::declval<Experiment>().results());
+    using key_type = std::remove_reference_t<decltype(std::get<0>(std::declval<results_type&>()))>;
+    using value_type = std::remove_reference_t<decltype(std::get<1>(std::declval<results_type&>()))>;
+    std::map<key_type, value_type> results;
+    conduct_experiment_runtime_ensemble_impl<0,Experiment,Verify>(std::forward_as_tuple(std::forward<RuntimeParams>(params)...),&results);
+}
+
+template<typename... Ts>
+struct type_pack {};
+
+template<typename T, typename Template>
+struct prepend_template;
+
+template<typename T,template<typename...> typename Template, typename... Ts>
+struct prepend_template<T,Template<Ts...>>
+{
+    using type = Template<T,Ts...>;
 };
 
+template<typename T, typename Template>
+using prepend_template_type = typename prepend_template<T,Template>::type;
+
+/*
+template<typename Template, typename... Ts>
+struct prepend_each_template;
+
+template<typename Template, typename... Ts>
+using prepend_each_template_type = typename prepend_each_template<Template, Ts...>::type;
+
+template<typename... Templates, typename... Ts>
+struct prepend_each_template<std::tuple<Templates...>, Ts...>
+{
+    //using type = type_pack<typename prepend_each_template<std::tuple<Templates>,Ts...>::type...>;
+    using type = type_pack<typename prepend_template<std::tuple<Templates>,Ts>::type...>;
+};*/
+
+template<typename... Ts>
+struct pack_cat;
+
+template<typename... Ts>
+using pack_cat_type = typename pack_cat<Ts...>::type;
+
+template<template<typename...> typename Outer, typename... Ts>
+struct pack_cat<Outer<Ts...>>
+{
+    using type = Outer<Ts...>;
+};
+
+template<template<typename...> typename Outer, typename... Ts, typename... Us>
+struct pack_cat<Outer<Ts...>,Outer<Us...>>
+{
+    using type = Outer<Ts...,Us...>;
+};
+
+template<template<typename...> typename Outer, typename... Ts, typename... Us, typename... More>
+struct pack_cat<Outer<Ts...>,Outer<Us...>,More...>
+    : pack_cat<Outer<Ts...,Us...>,typename pack_cat<More...>::type>
+{};
+
+template<typename Template, typename T>
+struct prepend_each_template;
+
+template<typename Template, typename T>
+using prepend_each_template_type = typename prepend_each_template<Template, T>::type;
+
+template<template<typename...> typename Outer, typename... Inners, typename T>
+struct prepend_each_template<Outer<Inners...>,T>
+{
+    using type = Outer<prepend_template_type<T,Inners>...>;
+};
+
+template<typename TemplateWithPack, typename... Ts>
+struct prepend_all_all_template
+{
+    using type = pack_cat_type<typename prepend_each_template<TemplateWithPack,Ts>::type...>;
+};
+
+template<typename TemplateWithPack, typename... Ts>
+using prepend_all_all_template_type = typename prepend_all_all_template<TemplateWithPack,Ts...>::type;
+
+template<typename... Ts>
+struct expand_template_collection;
+
+template<typename T, typename... Ts>
+struct expand_template_collection<T,Ts...>
+{
+/*
+    using type = prepend_each_template_type<
+                    typename expand_template_collection<Ts...>::type,
+                    T>;
+                    */
+    //using type = prepend_all_all_template_type<template expand_template_collection<Ts...>::type,T>;
+    using type = prepend_each_template_type<typename expand_template_collection<Ts...>::type,T>;
+};
+
+//template<template<typename...> typename Outer, typename...Inners, typename... Ts>
+template<typename...Inners, typename... Ts>
+struct expand_template_collection<std::tuple<Inners...>,Ts...>
+{
+    /*
+    using type = prepend_each_template_type<
+                    typename expand_template_collection<Ts...>::type,
+                    Inners...>;
+                    */
+    using type = prepend_all_all_template_type<typename expand_template_collection<Ts...>::type,Inners...>;
+};
+
+template<typename...Ts>
+struct expand_template_collection<std::tuple<Ts...>>
+{
+    using type = type_pack<type_pack<Ts>...>;
+};
+
+template<typename T>
+struct expand_template_collection<T>
+{
+    using type = type_pack<type_pack<T>>;
+};
+
+template<typename Experiment, bool Verify, typename... Params, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble(RuntimeParams&&... params)
+{
+}
+
+template<typename T>
+struct extract_param
+{
+    using param = T;
+};
+
+template<typename T, T t>
+struct extract_param<std::integral_constant<T,t>>
+{
+    static constexpr T param = t;
+};
+
+template<template<typename...> typename Template, typename... Ts>
+struct apply_wraped_template
+{
+    using type = Template<extract_param<Ts>::param...>;
+};
+
+//template<template typename Template, typename... Ts>
+//using apply_wraped_template_type = typename apply_wraped_template<Template,Ts...>::type;
+
 int main(int argc, char *argv[]) {
-  constexpr nersc::device_selector DeviceSelector = nersc::device_selector::autoselect;
-  constexpr nersc::code_type CodeType = nersc::code_type::source;
-  constexpr trial_config TrialConfig = trial_config::coalesced;
-  //constexpr trial_config TrialConfig = trial_config::queued;
-  constexpr size_t MemoryMax=1024_Mi;
+    constexpr nersc::device_selector DeviceSelector = nersc::device_selector::autoselect;
+    constexpr nersc::code_type CodeType = nersc::code_type::source;
+    constexpr trial_config TrialConfig = trial_config::coalesced;
+    //constexpr trial_config TrialConfig = trial_config::queued;
+    constexpr size_t MemoryMax=1024_Mi;
+    constexpr bool Verify = true;
 
-  uint wg_size;
+    uint wg_size;
 
-  if (argc == 2) {
-    wg_size = atoi(argv[1]);
-  }
-  else {
-    wg_size=0;  // let the OpenCL runtime decide
-  }
+    if (argc == 2) {
+        wg_size = atoi(argv[1]);
+    }
+    else {
+        wg_size=0;  // let the OpenCL runtime decide
+    }
 
-  std::vector<uint> wg_sizes = {1};
-  std::vector<uint32_t> flop_trials = {1,256};
+    std::set<uint> wg_sizes = {1};
+    std::set<uint32_t> flop_trials = {1,256};
 
-  roofline_type_runner<DeviceSelector,TrialConfig,MemoryMax>::run<float,double>(wg_sizes, flop_trials);
+    //roofline_type_runner<DeviceSelector,TrialConfig,MemoryMax>::run<float,double>(wg_sizes, flop_trials);
+    using Experiment = roofline<double,DeviceSelector,TrialConfig,MemoryMax>;
+    //conduct_experiment_runtime_ensemble<Experiment,Verify>(wg_sizes, flop_trials);
+    
+    std::cout << is_iterable_v<std::vector<int>> << std::endl;
+    std::cout << is_iterable_v<roofline_config> << std::endl;
 
-  return 0;
+    std::cout << std::endl;
+
+    //std::cout << typeid(typename prepend_each_template<std::tuple<std::tuple<double, long double>, std::tuple<short,float>>,int,long>::type).name() << std::endl;
+    std::cout << typeid(typename expand_template_collection<std::string,std::tuple<double, long double>,struct blah, std::tuple<int,long,long long>,std::chrono::duration<double>>::type).name() << std::endl;
+    std::cout << typeid(typename expand_template_collection<blah>::type).name() << std::endl;
+    std::cout << typeid(typename expand_template_collection<std::tuple<double, long double>>::type).name() << std::endl;
+    std::cout << typeid(typename expand_template_collection<std::tuple<double, long double>,blah>::type).name() << std::endl;
+
+    std::cout << typeid(typename apply_wraped_template<roofline,double,std::integral_constant<nersc::device_selector,DeviceSelector>, std::integral_constant<trial_config,TrialConfig>>::type).name() << std::endl;
+
+    return 0;
 }

@@ -10,9 +10,16 @@
 namespace nersc
 {
 
-constexpr size_t operator"" _Ki(unsigned long long v) { return v*1024ULL; }
-constexpr size_t operator"" _Mi(unsigned long long v) { return v*1024_Ki; }
-constexpr size_t operator"" _Gi(unsigned long long v) { return v*1024_Mi; }
+inline namespace literals {
+
+constexpr size_t operator"" _Ki(unsigned long long v) noexcept { return v*1024ULL; }
+constexpr size_t operator"" _Mi(unsigned long long v) noexcept { return v*1024_Ki; }
+constexpr size_t operator"" _Gi(unsigned long long v) noexcept { return v*1024_Mi; }
+constexpr size_t operator"" _K(unsigned long long v) noexcept { return v*1e3; }
+constexpr size_t operator"" _M(unsigned long long v) noexcept { return v*1e6; }
+constexpr size_t operator"" _G(unsigned long long v) noexcept { return v*1e9; }
+
+}
 
 enum class device_selector
 {
