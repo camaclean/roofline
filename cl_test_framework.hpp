@@ -10,6 +10,12 @@
 namespace nersc
 {
 
+namespace impl
+{
+template<typename T,typename=void>
+struct is_iterable_impl;
+}
+
 inline namespace literals {
 
 constexpr size_t operator"" _Ki(unsigned long long v) noexcept { return v*1024ULL; }
@@ -74,6 +80,69 @@ struct program_loader;
 
 template<device_selector DeviceSelector, code_type CodeType>
 cl::Program load_program(const cl::Context& context, const cl::Device& device, const std::string& format, const std::map<std::string,std::string>& params = {});
+
+template<auto I>
+using wrap_integral = std::integral_constant<decltype(I),I>;
+
+template<template<typename...> typename T, typename U>
+struct is_same_template;
+
+template<template<typename...> typename T, typename U>
+inline constexpr bool is_same_template_v = is_same_template<T,U>::value;
+
+template<typename T>
+using is_iterable = impl::is_iterable_impl<T>;
+
+template<typename T>
+inline constexpr bool is_iterable_v = is_iterable<T>::value;
+
+template<typename Experiment,typename=void>
+struct experiment_has_results;
+
+template<typename Experiment>
+inline constexpr bool experiment_has_results_v = experiment_has_results<Experiment>::value;
+
+template<typename... Ts>
+struct type_pack {};
+
+template<typename T, typename Template>
+struct prepend_template;
+
+template<typename T, typename Template>
+using prepend_template_type = typename prepend_template<T,Template>::type;
+
+template<typename... Ts>
+struct pack_cat;
+
+template<typename... Ts>
+using pack_cat_type = typename pack_cat<Ts...>::type;
+
+template<typename Template, typename T>
+struct prepend_each_template;
+
+template<typename Template, typename T>
+using prepend_each_template_type = typename prepend_each_template<Template, T>::type;
+
+template<typename TemplateWithPack, typename... Ts>
+struct prepend_all_all_template;
+
+template<typename TemplateWithPack, typename... Ts>
+using prepend_all_all_template_type = typename prepend_all_all_template<TemplateWithPack,Ts...>::type;
+
+template<typename... Ts>
+struct expand_template_collection;
+
+template<typename... Ts>
+using expand_template_collection_type = typename expand_template_collection<Ts...>::type;
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment(RuntimeParams&&... params);
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment_runtime_ensemble(RuntimeParams&&... params);
+
+template<template<typename...> typename Experiment, bool Verify, typename... Params, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble(RuntimeParams&&... params);
 
 /******************************************************
  * opencl_device_type_flag implementation
@@ -273,6 +342,251 @@ template<device_selector DeviceSelector, code_type CodeType>
 cl::Program load_program(const cl::Context& context, const cl::Device& device, const std::string& format, const std::map<std::string,std::string>& params)
 {
     return program_loader<DeviceSelector,CodeType>::load(context,device,format,params);
+}
+
+/******************************************************
+ * is_same_template implementation
+ *****************************************************/
+
+template<template<typename...> typename T, typename U>
+struct is_same_template : std::false_type {};
+
+template<template<typename...> typename T,  typename... Us>
+struct is_same_template<T,T<Us...>> : std::true_type {};
+
+/******************************************************
+ * experiment_has_results implementation
+ *****************************************************/
+
+template<typename Experiment,typename>
+struct experiment_has_results : std::false_type {};
+
+template<typename Experiment>
+struct experiment_has_results<Experiment, std::void_t<decltype(std::declval<Experiment>().results())>> : std::true_type {};
+
+/******************************************************
+ * is_iterable implementation
+ *****************************************************/
+
+namespace impl {
+
+template<typename T,typename>
+struct is_iterable_impl : std::false_type {};
+
+using std::begin;
+using std::end;
+
+template<typename T>
+struct is_iterable_impl<T,std::void_t<
+    decltype(begin(std::declval<T&>()) != end(std::declval<T&>())),
+    decltype(++begin(std::declval<T&>())),
+    decltype(*begin(std::declval<T&>()))>>
+    : std::true_type {};
+
+}
+
+/******************************************************
+ * prepend_template implementation
+ *****************************************************/
+
+template<typename T,template<typename...> typename Template, typename... Ts>
+struct prepend_template<T,Template<Ts...>>
+{
+    using type = Template<T,Ts...>;
+};
+
+/******************************************************
+ * pack_cat implementation
+ *****************************************************/
+
+template<template<typename...> typename Outer, typename... Ts>
+struct pack_cat<Outer<Ts...>>
+{
+    using type = Outer<Ts...>;
+};
+
+template<template<typename...> typename Outer, typename... Ts, typename... Us>
+struct pack_cat<Outer<Ts...>,Outer<Us...>>
+{
+    using type = Outer<Ts...,Us...>;
+};
+
+template<template<typename...> typename Outer, typename... Ts, typename... Us, typename... More>
+struct pack_cat<Outer<Ts...>,Outer<Us...>,More...>
+    : pack_cat<Outer<Ts...,Us...>,typename pack_cat<More...>::type>
+{};
+
+/******************************************************
+ * prepend_each_template implementation
+ *****************************************************/
+
+template<template<typename...> typename Outer, typename... Inners, typename T>
+struct prepend_each_template<Outer<Inners...>,T>
+{
+    using type = Outer<prepend_template_type<T,Inners>...>;
+};
+
+/******************************************************
+ * prepend_all_all_template implementation
+ *****************************************************/
+template<typename TemplateWithPack, typename... Ts>
+struct prepend_all_all_template
+{
+    using type = pack_cat_type<typename prepend_each_template<TemplateWithPack,Ts>::type...>;
+};
+
+/******************************************************
+ * expand_template_collection implementation
+ *****************************************************/
+
+template<typename T, typename... Ts>
+struct expand_template_collection<T,Ts...>
+{
+    using type = prepend_each_template_type<typename expand_template_collection<Ts...>::type,T>;
+};
+
+template<typename...Inners, typename... Ts>
+struct expand_template_collection<std::tuple<Inners...>,Ts...>
+{
+    using type = prepend_all_all_template_type<typename expand_template_collection<Ts...>::type,Inners...>;
+};
+
+template<typename I, I... Is, typename... Ts>
+struct expand_template_collection<std::integer_sequence<I,Is...>,Ts...>
+{
+    using type = prepend_all_all_template_type<typename expand_template_collection<Ts...>::type,std::integral_constant<I,Is>...>;
+};
+
+template<typename...Ts>
+struct expand_template_collection<std::tuple<Ts...>>
+{
+    using type = type_pack<type_pack<Ts>...>;
+};
+
+template<typename I, I... Is>
+struct expand_template_collection<std::integer_sequence<I,Is...>>
+{
+    using type = type_pack<type_pack<std::integral_constant<I,Is>>...>;
+};
+
+template<typename T>
+struct expand_template_collection<T>
+{
+    using type = type_pack<type_pack<T>>;
+};
+
+template<>
+struct expand_template_collection<>
+{
+    using type = type_pack<>;
+};
+
+/******************************************************
+ * conduct_experiment implementation
+ *****************************************************/
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment(RuntimeParams&&... params)
+{
+    Experiment e(std::forward<RuntimeParams>(params)...);
+    e.template run<Verify>();
+    if constexpr (experiment_has_results_v<Experiment>)
+        return e.results();
+}
+
+/******************************************************
+ * conduct_experiment_runtime_ensemble implementation
+ *****************************************************/
+
+namespace impl
+{
+
+template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I == std::tuple_size_v<RuntimeParams>>* = nullptr>
+void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
+{
+    if constexpr (experiment_has_results_v<Experiment>)
+    {
+        results->emplace(conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...));
+    } else {
+        conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...);
+    }
+}
+
+template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I != std::tuple_size_v<RuntimeParams>>* = nullptr>
+void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
+{
+    using param_type = std::remove_reference_t<std::tuple_element_t<I,RuntimeParams>>; 
+    if constexpr (is_iterable_v<param_type>)
+    {
+        for (auto& param : std::get<I>(std::forward<RuntimeParams>(params)))
+        {
+            conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., param);
+        }
+    } else {
+        conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., std::get<I>(std::forward<RuntimeParams>(params)));
+    }
+}
+
+}
+
+template<typename Experiment, bool Verify, typename... RuntimeParams>
+decltype(auto) conduct_experiment_runtime_ensemble(RuntimeParams&&... params)
+{
+    if constexpr (experiment_has_results_v<Experiment>) 
+    {
+        using results_type = decltype(std::declval<Experiment>().results());
+        using key_type = std::remove_reference_t<decltype(std::get<0>(std::declval<results_type&>()))>;
+        using value_type = std::remove_reference_t<decltype(std::get<1>(std::declval<results_type&>()))>;
+        std::map<key_type, value_type> results;
+        impl::conduct_experiment_runtime_ensemble_impl<0,Experiment,Verify>(std::forward_as_tuple(std::forward<RuntimeParams>(params)...),&results);
+        return results;
+    } else {
+        impl::conduct_experiment_runtime_ensemble_impl<0,Experiment,Verify>(std::forward_as_tuple(std::forward<RuntimeParams>(params)...),nullptr);
+    }
+}
+
+/******************************************************
+ * conduct_experiment_runtime_ensemble implementation
+ *****************************************************/
+
+namespace impl
+{
+
+template<template<typename...> typename Experiment, bool Verify, template<typename...> typename Packer, typename... Params, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble_impl2(Packer<Params...>, RuntimeParams&&... params)
+{
+    using RealExperiment = Experiment<Params...>;
+    return conduct_experiment_runtime_ensemble<RealExperiment,Verify>(std::forward<RuntimeParams>(params)...);
+}
+
+template<template<typename...> typename Experiment, bool Verify, template<typename...> typename Packer, typename FirstTest, typename... Tests, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble_impl(Packer<FirstTest,Tests...>, RuntimeParams&&... params)
+{
+    if constexpr (experiment_has_results_v<Experiment<FirstTest>>)
+    {
+        auto results = conduct_experiment_ensemble_impl2<Experiment,Verify>(FirstTest{},std::forward<RuntimeParams>(params)...);
+        ((results.merge(conduct_experiment_ensemble_impl2<Experiment,Verify>(Tests{},std::forward<RuntimeParams>(params)...)),0),...);
+        return results;
+    } 
+    else 
+    {
+        ((conduct_experiment_ensemble_impl2<Experiment,Verify>(Tests{},std::forward<RuntimeParams>(params)...),0),...);
+    }
+}
+
+template<template<typename...> typename Experiment, bool Verify, template<typename...> typename Packer, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble_impl(Packer<>, RuntimeParams&&... params)
+{
+    return conduct_experiment_runtime_ensemble<Experiment<>,Verify>(std::forward<RuntimeParams>(params)...);
+}
+
+}
+
+template<template<typename...> typename Experiment, bool Verify, typename... Params, typename... RuntimeParams>
+decltype(auto) conduct_experiment_ensemble(RuntimeParams&&... params)
+{
+    using ensemble = typename expand_template_collection<Params...>::type;
+    return impl::conduct_experiment_ensemble_impl<Experiment,Verify>(ensemble{},std::forward<RuntimeParams>(params)...);
 }
 
 }
