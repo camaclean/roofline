@@ -72,6 +72,8 @@ inline constexpr const char* file_suffix_v = file_suffix<DeviceSelector,CodeType
 template<device_selector DeviceSelector>
 std::tuple<cl::Context,cl::Device> init_opencl();
 
+std::string make_name(std::string format, const std::map<std::string,std::string>& params = {});
+
 template<device_selector DeviceSelector, code_type CodeType>
 std::string make_filename(std::string format, const std::map<std::string,std::string>& params = {});
 
@@ -242,7 +244,6 @@ std::tuple<cl::Context,cl::Device> init_opencl()
     cl::Device device = context.getInfo<CL_CONTEXT_DEVICES>()[0];
     std::string vendor = device.getInfo<CL_DEVICE_VENDOR>();
     std::string device_name = device.getInfo<CL_DEVICE_NAME>();
-    std::cout << "Using device: " << vendor << ": " << device_name << std::endl;
     return {context,device};
 }
 
@@ -254,10 +255,9 @@ std::tuple<cl::Context,cl::Device> init_opencl<device_selector::intel_fpga>()
     for (const auto& candidate : context.getInfo<CL_CONTEXT_DEVICES>())
     {
         std::string vendor = candidate.getInfo<CL_DEVICE_VENDOR>();
-        if (std::equal(std::begin(intel_vendor),std::end(intel_vendor),vendor.begin()))
+        if (std::equal(std::begin(intel_vendor),std::end(intel_vendor)-1,vendor.begin()))
         {
             std::string device_name = candidate.getInfo<CL_DEVICE_NAME>();
-            std::cout << "Using device: Intel: " << device_name << std::endl;
             return {context,candidate};
         }
     }
@@ -268,13 +268,19 @@ std::tuple<cl::Context,cl::Device> init_opencl<device_selector::intel_fpga>()
  * make_filename implementation
  *****************************************************/
 
-template<device_selector DeviceSelector, code_type CodeType>
-inline std::string make_filename(std::string format, const std::map<std::string,std::string>& params)
+inline std::string make_name(std::string format, const std::map<std::string,std::string>& params)
 {
     for (auto& [key,value] : params) 
     {
         format = std::regex_replace(format,std::regex(std::string("\\$\\{") + key + "\\}"),value);
     }
+    return format;
+}
+
+template<device_selector DeviceSelector, code_type CodeType>
+inline std::string make_filename(std::string format, const std::map<std::string,std::string>& params)
+{
+    format = make_name(format,params);
     format += file_suffix_v<DeviceSelector,CodeType>;
 #ifndef NDEBUG
     std::cout << "Filename: " << format << std::endl;
@@ -335,6 +341,9 @@ struct program_loader<DeviceSelector,code_type::binary>
         stream.seekg(0, std::ios_base::beg);
         std::vector<unsigned char> binary(length);
         std::copy(std::istreambuf_iterator<char>(stream),std::istreambuf_iterator<char>(),binary.begin());
+        //cl::Program::Binaries binaries{1,binary};
+        //std::vector<cl::Device> devices{1,device};
+        return {context, {device}, {binary}};
     }
 };
 
@@ -504,11 +513,17 @@ namespace impl
 template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I == std::tuple_size_v<RuntimeParams>>* = nullptr>
 void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
 {
-    if constexpr (experiment_has_results_v<Experiment>)
+    try
     {
-        results->emplace(conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...));
-    } else {
-        conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...);
+        if constexpr (experiment_has_results_v<Experiment>)
+        {
+            results->emplace(conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...));
+        } else {
+            conduct_experiment<Experiment,Verify>(std::forward<Ts>(args)...);
+        }
+    } catch (std::runtime_error e)
+    {
+        std::cerr << "Experiment failed: " << e.what() << std::endl;
     }
 }
 
@@ -520,10 +535,22 @@ void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *r
     {
         for (auto& param : std::get<I>(std::forward<RuntimeParams>(params)))
         {
-            conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., param);
+            try
+            {
+                conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., param);
+            } catch (std::runtime_error e)
+            {
+                std::cerr << "Experiment failed: " << e.what() << std::endl;
+            }
         }
     } else {
-        conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., std::get<I>(std::forward<RuntimeParams>(params)));
+        try 
+        {
+            conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., std::get<I>(std::forward<RuntimeParams>(params)));
+        } catch (std::runtime_error e)
+        {
+            std::cerr << "Experiment failed: " << e.what() << std::endl;
+        }
     }
 }
 

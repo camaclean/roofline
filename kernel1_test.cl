@@ -9,9 +9,6 @@
 #define REP128(S) REP64(S);  REP64(S)
 #define REP256(S) REP128(S); REP128(S)
 #define REP512(S) REP256(S); REP256(S)
-#define REP1024(S) REP512(S); REP512(S)
-#define REP2048(S) REP1024(S); REP1024(S)
-#define REP4096(S) REP2048(S); REP2048(S)
 
 #define KERNEL1(a,b,c)   ((a) = (b) + (c))
 #define KERNEL2(a,b,c)   ((a) = (a)*(b) + (c))
@@ -20,10 +17,10 @@
 #define TYPE double
 #endif
 
-//#ifndef ERT_FLOP
-//#  define ERT_FLOP 2
+#ifndef ERT_FLOP
+#  define ERT_FLOP 2
 //#  define ERT_FLOP 256
-//#endif
+#endif
 
 #ifndef UNROLL
 #define UNROLL 8
@@ -80,16 +77,8 @@ void kernel1(__global TYPE* restrict A, const size_t i) {
 #if (ERT_FLOP & 1024) == 1024 /* add 1024 flops */
       REP512(KERNEL2(beta,A[i],alpha));
 #endif
-#if (ERT_FLOP & 2048) == 2048 /* add 1024 flops */
-      REP1024(KERNEL2(beta,A[i],alpha));
-#endif
-#if (ERT_FLOP & 4096) == 4096 /* add 1024 flops */
-      REP2048(KERNEL2(beta,A[i],alpha));
-#endif
-#if (ERT_FLOP & 8192) == 8192 /* add 1024 flops */
-      REP4096(KERNEL2(beta,A[i],alpha));
-#endif
 
+      printf("calc: %f %f\n", A[i], beta);
       A[i] = beta;
 }
 
@@ -100,12 +89,18 @@ __kernel void ocl_kernel(
             __global TYPE* restrict B,
             __global int* restrict params)
 {
+  printf("%lu %lu %zu %zu %ld\n", trials, elements, A, B, params);
   ulong el = elements/2/UNROLL;
+  if (el == 0)
+  {
+    return;
+  }
   for (ulong i=0; i<el; ++i)
   {
     for (ulong j=0; j<trials; ++j) {
       #pragma unroll UNROLL
       for (ulong k=0; k<UNROLL; ++k) {
+        printf("here\n");
         kernel1(A,i*UNROLL+k);
         kernel1(B,i*UNROLL+k);
       }

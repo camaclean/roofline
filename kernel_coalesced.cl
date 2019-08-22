@@ -101,9 +101,9 @@ __kernel void ocl_kernel(
             __global int* restrict params)
 {
   ulong el = elements/2/UNROLL;
-  for (ulong i=0; i<el; ++i)
-  {
-    for (ulong j=0; j<trials; ++j) {
+  for (ulong j=0; j<trials; ++j) {
+    for (ulong i=0; i<el; ++i)
+    {
       #pragma unroll UNROLL
       for (ulong k=0; k<UNROLL; ++k) {
         kernel1(A,i*UNROLL+k);
