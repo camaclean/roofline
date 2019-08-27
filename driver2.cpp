@@ -433,7 +433,6 @@ public:
 
     void print_data(FILE *f, uint64_t working_set_size, int bytes_per_elem, uint64_t total_bytes, uint64_t total_flops, std::chrono::duration<double> seconds, uint64_t t)
     {
-        std::cout << "bytes per elem: " << bytes_per_elem << std::endl;
         fprintf(f,"%12s %12s %8u %8u %8u %12lu %12lu %15.3lf %12lu %12lu %12.3f %12.3f\n",
             type_param_v<T>,
             trial_config_name_v<TrialConfig>,

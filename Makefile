@@ -1,6 +1,5 @@
 CPPC=g++-9
-#CCFLAGS=-flto -fuse-ld=gold -fuse-linker-plugin -fvisibility=hidden -I . -I/opt/inteldevstack/intelFPGA_pro/hld/host/include20/ -g -std=c++17 -Wno-ignored-attributes -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=120
-CCFLAGS=-fvisibility=hidden -I . -I/opt/inteldevstack/intelFPGA_pro/hld/host/include20/ -g -std=c++17 -Wno-ignored-attributes -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=120
+CCFLAGS=-O3 -I . -I/opt/inteldevstack/intelFPGA_pro/hld/host/include20/ -g -std=c++17 -Wno-ignored-attributes -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=120
 LIBS = -lOpenCL
 
 all: driver1 #driver2 driver-cpu
