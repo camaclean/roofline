@@ -489,7 +489,6 @@ public:
             n = (working_set_min > unroll*Buffers) ? working_set_min : unroll*Buffers;
         else
             n = (working_set_min > unroll) ? working_set_min : unroll;
-        std::cout << "starting n: " << n << std::endl;
 
         while (n <= nsize) { // working set - nsize
 
@@ -500,11 +499,6 @@ public:
             if (ntrials > 1<<26 && Buffers > 0)
                 ntrials = 1 << 26;
 
-            //std::cout << "n: " << n << " nsize: " << nsize << " trials_min: " << trials_min << " ntrials: " << ntrials << std::endl;
-
-            // define parameters on the device
-            //d_params = cl::Buffer(context, begin(params), end(params), false);
-
             if (n == real_memory_max/sizeof(T) && Buffers > 0)
             {
                 n -= 1_Mi/sizeof(T);
@@ -513,15 +507,8 @@ public:
 
             // loop through increasing numbers of trials
             for (t = ntrials /*trials_min*/; t <= ntrials; t = t * 2) { // working set - ntrials
-                std::cout << "Running trial " << t << " n: " << n << " nsize: " << nsize << std::endl;
-
-                // move fresh buffer to device for each trial
-                //for (int i = 0; i < Buffers; ++i)
-                //    d_buf[i] = cl::Buffer(context, std::begin(buf), std::begin(buf)+n/Buffers, false, false);
                 cl::Buffer d_buf[Buffers];
                 if constexpr (Buffers == 1) {
-                    //d_buf[0].~Buffer();
-                    //new (&d_buf[0]) cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T) * n, nullptr, &err);
                     d_buf[0] = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T) * n, nullptr, &err);
                     if (err != CL_SUCCESS)
                         std::cerr << "Error creating d_buf: " << err << std::endl;
@@ -636,7 +623,7 @@ private:
 
 int main(int argc, char *argv[]) {
     constexpr nersc::device_selector DeviceSelector = nersc::device_selector::intel_fpga;
-    //constexpr nersc::device_selector DeviceSelector = nersc::device_selector::cpu;
+    //constexpr nersc::device_selector DeviceSelector = nersc::device_selector::cpu; //FIXME
     //constexpr nersc::device_selector DeviceSelector = nersc::device_selector::autoselect;
     constexpr nersc::code_type CodeType = nersc::code_type::source;
     constexpr trial_config TrialConfig = trial_config::coalesced;
@@ -647,18 +634,7 @@ int main(int argc, char *argv[]) {
     using Buffers = std::integer_sequence<int,0,2>;
     constexpr auto KernelType = opencl_kernel_type::swi;
     //constexpr auto KernelType = opencl_kernel_type::ndrange;
-    using DataTypes = std::tuple<double,float>;
     using nersc::wrap_integral;
-
-    uint wg_size;
-
-    if (argc == 2) {
-        wg_size = atoi(argv[1]);
-    }
-    else {
-        wg_size=0;  // let the OpenCL runtime decide
-    }
-
 
     //roofline_type_runner<DeviceSelector,TrialConfig,MemoryMax>::run<float,double>(wg_sizes, flop_trials);
     //using Experiment = roofline<double,wrap_integral<DeviceSelector>,wrap_integral<TrialConfig>,wrap_integral<MemoryMax>>;
@@ -671,10 +647,11 @@ int main(int argc, char *argv[]) {
 
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {1,8,9,10,19,21,39,45,79,92,128,186,215,250,256,300,377,503,512,757,1024,1515}; //{256};
+        std::set<uint32_t> flop_trials = {1,2,8,9,10,16,19,21,32,39,45,64,79,92,128,150,186,215,250,256,300,377,503,512,757,1024,1515};
         std::set<uint> unrolls = {1,2,3,4,5,6,7,8,16,32,64,128,192,256};
         //Runs every permutation of template combination enumerated by std::tuple and std::integral_sequence plus every combination of runtime parameters
         //Skips if kernel does not exist 
+        using DataTypes = std::tuple<int,double,float>;
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -688,7 +665,7 @@ int main(int argc, char *argv[]) {
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {1,4,5,8,9,11,20,21,23,45,47,64,92,94,128,186,189,256,377,379,512,754,757,758,1024,1514,1515,1516,3000,3030}; //{256};
+        std::set<uint32_t> flop_trials = {1,4,5,8,9,11,20,21,23,45,47,64,92,94,128,186,189,256,377,379,512,754,757,758,1024,1514,1515,1516,3000,3030};
         std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256,512};
         std::set<size_t> els_per_bank = {1,2,4,8,16,32,64,128,256,512};
         nersc::conduct_experiment_ensemble<
@@ -705,7 +682,7 @@ int main(int argc, char *argv[]) {
     nersc::conduct_experiment_ensemble<
         roofline,
         Verify,
-        DataTypes,
+        float,
         wrap_integral<DeviceSelector>,
         wrap_integral<TrialConfig>,
         wrap_integral<opencl_kernel_type::ndrange>,

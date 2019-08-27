@@ -228,8 +228,6 @@ public:
 
 };
 
-}
-
 template<typename T, size_t N, size_t Count>
 struct duplicate
 {
@@ -289,5 +287,7 @@ struct template_pack_type_n_duplicator<N,KernelClass>
 {
     using type = KernelClass<>;
 };
+
+}
 
 #endif //NERSC__FPGAOCLUTILS_HPP
