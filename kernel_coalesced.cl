@@ -39,6 +39,9 @@ void kernel1(__global TYPE* restrict A, const size_t i) {
 #elif TYPE == int
   const int factor=2;
   const int alpha=-1;
+#elif TYPE == long
+  const long factor=2;
+  const long alpha=-1;
 #else
   const TYPE epsilon=1e-6;
   const TYPE factor=(1.0 - epsilon);
