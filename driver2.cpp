@@ -78,13 +78,13 @@ using  ert_kernel_type = typename ert_kernel_type_selector<Config, KernelType, B
 template<int Buffers>
 struct ert_kernel_type_selector<trial_config::coalesced,opencl_kernel_type::ndrange,Buffers>
 {
-    using type = nersc::KernelDuplicateBufferFunctor<ulong, cl::Buffer[Buffers], cl::Buffer>;
+    using type = nersc::KernelDuplicateBufferFunctor<ulong, ulong, cl::Buffer[Buffers], cl::Buffer>;
 };
 
 template<int Buffers>
 struct ert_kernel_type_selector<trial_config::queued,opencl_kernel_type::ndrange,Buffers>
 {
-    using type = nersc::KernelDuplicateBufferFunctor<cl::Buffer[Buffers], cl::Buffer>;
+    using type = nersc::KernelDuplicateBufferFunctor<ulong,cl::Buffer[Buffers], cl::Buffer>;
 };
 
 template<int Buffers>
@@ -293,7 +293,7 @@ private:
     std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::ndrange && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
         for (uint i = 0; i < t; ++ i)
-            (*ocl_kernel)(make_enqueue_args(n,wg_size),d_buf,d_params);
+            (*ocl_kernel)(make_enqueue_args(n,wg_size),n,d_buf,d_params);
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
@@ -306,7 +306,8 @@ private:
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
     std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::ndrange && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
-        (*ocl_kernel)(make_enqueue_args(n,wg_size),t,d_buf,d_params);
+        auto par = ocl_kernel->getKernel().template getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(device);
+        (*ocl_kernel)(make_enqueue_args(par[0],par[0]),t,n,d_buf,d_params);
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
@@ -651,10 +652,20 @@ int main(int argc, char *argv[]) {
     //nersc::conduct_experiment_ensemble<roofline,Verify,std::tuple<float,double>>(wg_sizes, flop_trials);
     //nersc::conduct_experiment_ensemble<roofline,Verify,float,wrap_integral<DeviceSelector>,wrap_integral<TrialConfig>,wrap_integral<KernelType>,wrap_integral<Buffers>>(wg_sizes, flop_trials, 1, unrolls);
 
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        float,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<trial_config::queued>,
+        wrap_integral<opencl_kernel_type::ndrange>,
+        std::integer_sequence<int,1,2>,
+        wrap_integral<MemoryMax>
+        >(256, std::set<uint32_t>{1,92,187,377,757,1515,3033}, 1, std::set<uint>{1,2,4,8,16});
     {
         std::set<uint> wg_sizes = {1};
         std::set<uint32_t> flop_trials = {1,2,4,8,16,32,64,128,256,512,1024};
-        std::set<uint> unrolls = {1,2,3,4,5,6,7,8,16,32,64,128,192,256};
+        std::set<uint> unrolls = {1,2,3,4,5,6,7,8,12,16,32,64,128,192,256,512,1024};
         //Runs every permutation of template combination enumerated by std::tuple and std::integral_sequence plus every combination of runtime parameters
         //Skips if kernel does not exist
         using DataTypes = std::tuple<long,int,double,float>;
@@ -665,14 +676,55 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,2>,
+            std::integer_sequence<int,1,2>,
             wrap_integral<MemoryMax>
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {187,3032};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
+        std::set<uint32_t> flop_trials = {1};
+        std::set<uint> unrolls = {3,5,6,7,12,16,24,48,96};
+        using DataTypes = std::tuple<float>;
+        nersc::conduct_experiment_ensemble<
+            roofline,
+            Verify,
+            DataTypes,
+            wrap_integral<DeviceSelector>,
+            wrap_integral<TrialConfig>,
+            wrap_integral<KernelType>,
+            std::integer_sequence<int,1,2>,
+            wrap_integral<MemoryMax>
+        >(wg_sizes, flop_trials, 1, unrolls);
+    }
+    {
+        using NonPow2FloatMax1 = roofline<float,
+                                          wrap_integral<DeviceSelector>,
+                                          wrap_integral<TrialConfig>,
+                                          wrap_integral<KernelType>,
+                                          std::integral_constant<int,1>,
+                                          wrap_integral<MemoryMax>>;
+        NonPow2FloatMax1(1,1009,1,3).run<Verify>();
+        NonPow2FloatMax1(1,605,1,5).run<Verify>();
+        NonPow2FloatMax1(1,431,1,7).run<Verify>();
+    }
+    {
+        using NonPow2FloatMax2 = roofline<float,
+                                          wrap_integral<DeviceSelector>,
+                                          wrap_integral<TrialConfig>,
+                                          wrap_integral<KernelType>,
+                                          std::integral_constant<int,2>,
+                                          wrap_integral<MemoryMax>>;
+        NonPow2FloatMax2(1,503,1,3).run<Verify>();
+        NonPow2FloatMax2(1,300,1,5).run<Verify>();
+        NonPow2FloatMax2(1,301,1,5).run<Verify>();
+        NonPow2FloatMax2(1,250,1,6).run<Verify>();
+        NonPow2FloatMax2(1,251,1,6).run<Verify>();
+        NonPow2FloatMax2(1,215,1,7).run<Verify>();
+    }
+    {
+        std::set<uint> wg_sizes = {1};
+        std::set<uint32_t> flop_trials = {3,5,6,7,187,3032};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -680,13 +732,13 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,2>,
+            std::integer_sequence<int,1,2>,
             wrap_integral<MemoryMax>
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {3,6,13,27,54,92,108};
+        std::set<uint32_t> flop_trials = {1,3,6,7,13,14,16,27,28,54,55,92,108,110,120,216,140,150,170,180,190,200,210,212,213,214,215,426};
         std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
         nersc::conduct_experiment_ensemble<
             roofline,
@@ -695,14 +747,14 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,2>,
+            std::integer_sequence<int,1,2>,
             wrap_integral<MemoryMax>
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {3,15,30,62,125,253,505};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
+        std::set<uint32_t> flop_trials = {3,7,15,30,31,36,62,63,82,125,253,505};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -710,14 +762,14 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,2>,
+            std::integer_sequence<int,1,2>,
             wrap_integral<MemoryMax>
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {3,7,15,155};
-        std::set<uint> unrolls = {1,2,4,8,16,32};
+        std::set<uint32_t> flop_trials = {1,3,5,9,15,36,38,39,82,83,155,157,158,159,160,255,314,315,316,317};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -725,13 +777,13 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,2>,
+            std::integer_sequence<int,1,2>,
             wrap_integral<MemoryMax>
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {5,9,11,20,21,23,32,45,47,92,94,186,187,189,377,379,754,757,758,1514,1515,1516,3000,3030,3032};
+        std::set<uint32_t> flop_trials = {5,6,9,11,20,21,23,32,45,47,92,94,186,187,189,377,379,754,757,758,1514,1515,1516,3000,3030,3032};
         std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256,512};
         std::set<size_t> els_per_bank = {1,2,4,8,16,32,64,128,256,512};
         nersc::conduct_experiment_ensemble<
@@ -746,7 +798,7 @@ int main(int argc, char *argv[]) {
         >(wg_sizes, flop_trials, 1, unrolls, els_per_bank);
     }
     {
-        std::set<uint32_t> flop_trials = {1,64,128,1024,1515};
+        std::set<uint32_t> flop_trials = {1,7,16,21,32,45,64,128,186,187,256,377,1024,1515,3031};
         std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
         nersc::conduct_experiment_ensemble<
             roofline,
@@ -759,7 +811,21 @@ int main(int argc, char *argv[]) {
             wrap_integral<MemoryMax>
         >(1, flop_trials, 1, unrolls);
     }
-    /*
+    {
+        std::set<uint> wg_sizes = {1};
+        std::set<uint32_t> flop_trials = {16,92,186,187,512,757,3031,3032};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
+        nersc::conduct_experiment_ensemble<
+            roofline,
+            Verify,
+            float,
+            wrap_integral<DeviceSelector>,
+            wrap_integral<TrialConfig>,
+            wrap_integral<KernelType>,
+            std::integral_constant<int,1>,
+            wrap_integral<MemoryMax>
+        >(wg_sizes, flop_trials, 1, unrolls);
+    }
     nersc::conduct_experiment_ensemble<
         roofline,
         Verify,
@@ -769,7 +835,57 @@ int main(int argc, char *argv[]) {
         wrap_integral<opencl_kernel_type::swi>,
         std::integral_constant<int,1>,
         wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{2048,3030,3032}, 1, 1);
+        >(1, std::set<uint32_t>{1,2048,3030,3032,3033}, 1, std::set<uint>{1});
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        float,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<TrialConfig>,
+        wrap_integral<opencl_kernel_type::swi>,
+        std::integral_constant<int,1>,
+        wrap_integral<MemoryMax>
+        >(1, std::set<uint32_t>{1,505,506}, 1, std::set<uint>{3});
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        float,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<TrialConfig>,
+        wrap_integral<opencl_kernel_type::swi>,
+        std::integral_constant<int,1>,
+        wrap_integral<MemoryMax>
+        >(1, std::set<uint32_t>{1,603,604}, 1, std::set<uint>{5});
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        float,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<TrialConfig>,
+        wrap_integral<opencl_kernel_type::swi>,
+        std::integral_constant<int,1>,
+        wrap_integral<MemoryMax>
+        >(1, std::set<uint32_t>{1,503}, 1, std::set<uint>{6});
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        long,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<TrialConfig>,
+        wrap_integral<opencl_kernel_type::swi>,
+        std::integral_constant<int,1>,
+        wrap_integral<MemoryMax>
+        >(1, std::set<uint32_t>{140,150,170,180,190,200,210,213}, 1, std::set<uint>{1});
+    nersc::conduct_experiment_ensemble<
+        roofline,
+        Verify,
+        int,
+        wrap_integral<DeviceSelector>,
+        wrap_integral<TrialConfig>,
+        wrap_integral<opencl_kernel_type::swi>,
+        std::integral_constant<int,1>,
+        wrap_integral<MemoryMax>
+        >(1, std::set<uint32_t>{1,1011}, 1, std::set<uint>{1});
     nersc::conduct_experiment_ensemble<
         roofline,
         Verify,
@@ -779,9 +895,7 @@ int main(int argc, char *argv[]) {
         wrap_integral<opencl_kernel_type::ndrange>,
         std::integral_constant<int,1>,
         wrap_integral<MemoryMax>
-        >(1<<12, 1, 1, 1);
-    */
-
+        >(1<<12, std::set<uint32_t>{1,3033}, 1, 1);
 
     return 0;
 }
