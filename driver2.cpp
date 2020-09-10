@@ -4,8 +4,11 @@
 #include <cmath>
 #include "cl_test_framework.hpp"
 #include "fpgaoclutils.hpp"
+#include "fpgametrics.hpp"
 #include <set>
 #include <filesystem>
+#include <thread>
+#include <atomic>
 
 #ifndef DEVICE
 #  define DEVICE CL_DEVICE_TYPE_DEFAULT
@@ -153,6 +156,12 @@ struct type_param<long>
     static constexpr const char value[] = "long";
 };
 
+template<>
+struct type_param<signed char>
+{
+    static constexpr const char value[] = "signed_char";
+};
+
 //#define ERT_MEMORY_MAX ((uint64_t)8*1024*1024*1024)
 //#define ERT_ALIGN 32
 //#define ERT_WORKING_SET_MIN 8192
@@ -163,6 +172,8 @@ struct type_param<long>
 #undef DEBUG
 #define HEADER
 #undef VERIFY
+
+struct ignore_type {};
 
 struct roofline_results
 {
@@ -290,60 +301,79 @@ private:
     }
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::ndrange && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::ndrange && (DBufs > 0), std::vector<cl::Event>> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
+        uint64_t range = n;
+        std::vector<cl::Event> ret;
+        //std::cerr << "wg_size: " << wg_size << std::endl;
+        if (n % wg_size)
+        {
+            range /= wg_size;
+            range += 1;
+            range *= wg_size;
+        }
+        //std::cerr << "range: " << range << std::endl;*/
         for (uint i = 0; i < t; ++ i)
-            (*ocl_kernel)(make_enqueue_args(n,wg_size),n,d_buf,d_params);
+            ret.push_back((*ocl_kernel)(make_enqueue_args(range,wg_size),n,d_buf,d_params));
+        return ret;
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::ndrange && DBufs == 0> run_kernel(uint64_t n, uint t, cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::ndrange && DBufs == 0, std::vector<cl::Event>> run_kernel(uint64_t n, uint t, ignore_type, cl::Buffer& d_params)
     {
+        std::vector<cl::Event> ret;
         for (uint i = 0; i < t; ++ i)
-            (*ocl_kernel)(make_enqueue_args(n,wg_size),d_params);
+            ret.push_back((*ocl_kernel)(make_enqueue_args(n,wg_size),d_params));
+        return ret;
     }
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::ndrange && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::ndrange && (DBufs > 0), cl::Event> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
         auto par = ocl_kernel->getKernel().template getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(device);
-        (*ocl_kernel)(make_enqueue_args(par[0],par[0]),t,n,d_buf,d_params);
+        return (*ocl_kernel)(make_enqueue_args(par[0],par[0]),t,n,d_buf,d_params);
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::ndrange && DBufs == 0> run_kernel(uint64_t n, uint t, cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::ndrange && DBufs == 0, cl::Event> run_kernel(uint64_t n, uint t, ignore_type, cl::Buffer& d_params)
     {
-        (*ocl_kernel)(make_enqueue_args(n,wg_size),t,d_params);
+        return (*ocl_kernel)(make_enqueue_args(n,wg_size),t,d_params);
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::swi && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::swi && (DBufs > 0), std::vector<cl::Event>> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
+        std::vector<cl::Event> ret;
         for (uint i = 0; i < t; ++ i)
-            (*ocl_kernel)(cl::EnqueueArgs(queue,1),n,d_buf,d_params);
+            ret.push_back((*ocl_kernel)(cl::EnqueueArgs(queue,1),n,d_buf,d_params));
+        return ret;
     };
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::swi && DBufs == 0> run_kernel(uint64_t n, uint t, cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::queued && KT == opencl_kernel_type::swi && DBufs == 0, std::vector<cl::Event>> run_kernel(uint64_t n, uint t, ignore_type, cl::Buffer& d_params)
     {
+        std::vector<cl::Event> ret;
         for (uint i = 0; i < t; ++ i)
-            (*ocl_kernel)(cl::EnqueueArgs(queue,1),n,d_params);
+           ret.push_back( (*ocl_kernel)(cl::EnqueueArgs(queue,1),n,d_params));
+        return ret;
     };
 
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::swi && (DBufs > 0)> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::swi && (DBufs > 0), cl::Event> run_kernel(uint64_t n, uint t, cl::Buffer (&d_buf)[DBufs], cl::Buffer& d_params)
     {
         cl_int err;
-        (*ocl_kernel)({queue,{1}},t,n,d_buf,d_params,err);
+        cl::Event event = (*ocl_kernel)({queue,{1}},t,n,d_buf,d_params,err);
         if (err != CL_SUCCESS)
             std::cerr << "Error running kernel: " << err << std::endl;
+        return event;
     };
     template<trial_config Config = TrialConfig, opencl_kernel_type KT = KernelType, size_t DBufs = Buffers>
-    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::swi && DBufs == 0> run_kernel(uint64_t n, uint t, cl::Buffer& d_params)
+    std::enable_if_t<Config == trial_config::coalesced && KT == opencl_kernel_type::swi && DBufs == 0, cl::Event> run_kernel(uint64_t n, uint t, ignore_type, cl::Buffer& d_params)
     {
         cl_int err;
-        (*ocl_kernel)({queue,{1}},t,n,d_params,err);
+        cl::Event event = (*ocl_kernel)({queue,{1}},t,n,d_params,err);
         if (err != CL_SUCCESS)
             std::cerr << "Error running kernel: " << err << std::endl;
+        return event;
     };
 
 public:
@@ -353,7 +383,7 @@ public:
       , program{}
       , queue{}
       , desired_wg_size{wg_size}
-      , wg_size{}
+      , wg_size{wg_size}
       , ert_flops{ert_flops}
       , trials_min{trials_min}
       , unroll{unroll}
@@ -395,6 +425,7 @@ public:
           };
         std::string name = nersc::make_name((std::string("${device_type}_") + all_kernel_name_format<>).c_str(),kernel_params);
         std::string filename = name + ".log";
+        powerfilename = name + ".power.log";
         done = std::filesystem::exists(filename);
 
         if (done)
@@ -405,10 +436,18 @@ public:
             wg_size = max_wg_size;
         else
             wg_size = desired_wg_size;
-        queue = cl::CommandQueue(context);
+        queue = cl::CommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE);
 
-        program = nersc::load_program<DeviceSelector,CodeType>(context,device,kernel_name_format<>,kernel_params);
+        try {
+            program = nersc::load_program<DeviceSelector,CodeType>(context,device,kernel_name_format<>,kernel_params);
+        } catch (std::runtime_error& e) {
+            std::cerr << e.what() << std::endl;
+            done = true;
+            return;
+        }
+
         ocl_kernel = new kernel_type(program, "ocl_kernel");
+
         if constexpr (Buffers == 0)
             std::cout << "Kernel type: " <<  abi::__cxa_demangle(typeid(kernel_type).name(),0,0,0) << std::endl;
         else
@@ -418,6 +457,8 @@ public:
 
         for (auto out : {stdout, outfile})
             print_header(out);
+        //XXX Test coverage test XXX
+        //done=true;
     }
 
     void print_header(FILE *f = stdout) noexcept
@@ -450,6 +491,21 @@ public:
         fflush(f);
     }
 
+    std::chrono::duration<double> kernel_runtime(const cl::Event& ev)
+    {
+        return std::chrono::duration<double>((ev.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+         ev.getProfilingInfo<CL_PROFILING_COMMAND_START>())/1.0e9);
+    }
+
+    std::chrono::duration<double> kernel_runtime(const std::vector<cl::Event>& el)
+    {
+        double time = 0.0;
+        for (const auto& ev : el)
+            time += (ev.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
+                ev.getProfilingInfo<CL_PROFILING_COMMAND_START>())/1.0e9;
+        return std::chrono::duration<double>(time);
+    }
+
     template<bool Verify>
     void run(uint64_t working_set_min = 1)
     {
@@ -459,6 +515,39 @@ public:
         uint64_t t;
 
         int line = 0;
+
+        std::atomic<int> powerbarrier(2);
+        std::atomic<bool> logpower{false};
+        std::atomic<bool> logpowerdone{false};
+        std::atomic<int> starts(0);
+
+        std::thread powerthread([&,this]() {
+            std::ofstream file(this->powerfilename);
+            nersc::opae::Fpga fpga{};
+            int last = -1;
+            auto start_time = std::chrono::system_clock::now();
+            auto absolute_start_time = std::chrono::system_clock::now();
+            powerbarrier -= 1;
+            while (powerbarrier.load() > 0) {}
+            while (!logpowerdone.load()) {
+                if (logpower.load()) {
+                    if (last < starts) {
+                        start_time = std::chrono::system_clock::now();
+                        last = starts;
+                    }
+                    auto now_time = std::chrono::system_clock::now();
+                    std::chrono::duration<double> seconds = now_time-start_time;
+                    std::chrono::duration<double> absolute_seconds = now_time-absolute_start_time;
+                    file << starts << " " << absolute_seconds.count() << " " << seconds.count() << " " << fpga.powerUsage() << std::endl;
+
+                } else {
+                    using namespace std::chrono_literals;
+                    std::this_thread::sleep_for(100ms);
+                }
+            }
+
+            //printf("Power Usage: %f Watts\n", fpga.powerUsage());
+        });
 
         size_t real_memory_max = MemoryMax;
         if constexpr (DeviceSelector == nersc::device_selector::intel_fpga && Buffers == 1)
@@ -496,8 +585,8 @@ public:
             uint64_t ntrials = nsize / n;
             if (ntrials < 1)
                 ntrials = 1;
-            if (ntrials > 1<<26 && Buffers > 0)
-                ntrials = 1 << 26;
+            if (ntrials > 1<<24 && Buffers > 0)
+                ntrials = 1 << 24;
 
             if (n == real_memory_max/sizeof(T) && Buffers > 0)
             {
@@ -507,7 +596,9 @@ public:
 
             // loop through increasing numbers of trials
             for (t = ntrials /*trials_min*/; t <= ntrials; t = t * 2) { // working set - ntrials
-                cl::Buffer d_buf[Buffers];
+                //cl::Buffer d_buf[Buffers];
+                using DBufType = std::conditional_t<Buffers,cl::Buffer[Buffers],ignore_type>;
+                DBufType d_buf;
                 auto tr = t;
                 if constexpr (Buffers == 0)
                 {
@@ -532,15 +623,19 @@ public:
                         std::cerr << "Error creating d_buf[1]: " << err << " " << sizeof(T)*n/2 << " " << n << " " << MemoryMax << std::endl;
                     cl::copy(queue, begin(buf), begin(buf)+n/2, d_buf[1]);
                 }
+                if constexpr (TrialConfig == trial_config::queued)
+                    tr = (tr > 1024*256) ? 1024*256 : tr;
 
                 // queue up trials
                 // note: currently OCL kernel does not account for nid offset
+                powerbarrier -= 1;
+                while (powerbarrier.load() > 0) {}
+                logpower.store(true);
                 auto start_time = std::chrono::system_clock::now();
-                if constexpr (Buffers == 0)
-                    run_kernel<TrialConfig>(n, tr, d_params);
-                else
-                    run_kernel<TrialConfig>(n, tr, d_buf, d_params);
+                auto ev = run_kernel<TrialConfig>(n, tr, d_buf, d_params);
                 queue.finish();  // wait for all trials to finish
+                starts += 1;
+                logpower.store(false);
                 auto end_time = std::chrono::system_clock::now();
 
                 // print out the resuls
@@ -549,8 +644,8 @@ public:
 
                 cl::copy(queue, d_params, begin(params), end(params));
                 bytes_per_elem = sizeof(T); //params[0];
-                mem_accesses_per_elem = params[1];
-                ert_flops = params[2];
+                mem_accesses_per_elem = 2; //params[1];
+                //ert_flops = params[2];
                 std::chrono::duration<double> seconds = end_time-start_time;
                 uint64_t working_set_size = n;
                 uint64_t total_bytes = tr * working_set_size * bytes_per_elem * mem_accesses_per_elem;
@@ -570,6 +665,8 @@ public:
             n *= 2; //1.1;
 
         } // working set - nsize
+        logpowerdone.store(true);
+        powerthread.join();
     }
     template<typename U=T>
     std::enable_if_t<std::is_floating_point_v<U>,bool> verify(size_t psize, size_t t, size_t n, cl::Buffer (&d_buf)[Buffers])
@@ -626,6 +723,7 @@ private:
     bool done;
     FILE* outfile;
     std::pair<roofline_config, std::vector<roofline_results>> res;
+    std::string powerfilename;
 };
 
 int main(int argc, char *argv[]) {
@@ -643,14 +741,7 @@ int main(int argc, char *argv[]) {
     //constexpr auto KernelType = opencl_kernel_type::ndrange;
     using nersc::wrap_integral;
 
-    //roofline_type_runner<DeviceSelector,TrialConfig,MemoryMax>::run<float,double>(wg_sizes, flop_trials);
-    //using Experiment = roofline<double,wrap_integral<DeviceSelector>,wrap_integral<TrialConfig>,wrap_integral<MemoryMax>>;
     using Experiment = roofline<float,wrap_integral<DeviceSelector>,wrap_integral<TrialConfig>,wrap_integral<KernelType>,wrap_integral<1>>;
-    //Experiment e(1,1,1,1);
-    //e.run<false>();
-    //nersc::conduct_experiment_runtime_ensemble<Experiment,Verify>(wg_sizes, flop_trials);
-    //nersc::conduct_experiment_ensemble<roofline,Verify,std::tuple<float,double>>(wg_sizes, flop_trials);
-    //nersc::conduct_experiment_ensemble<roofline,Verify,float,wrap_integral<DeviceSelector>,wrap_integral<TrialConfig>,wrap_integral<KernelType>,wrap_integral<Buffers>>(wg_sizes, flop_trials, 1, unrolls);
 
     nersc::conduct_experiment_ensemble<
         roofline,
@@ -661,14 +752,15 @@ int main(int argc, char *argv[]) {
         wrap_integral<opencl_kernel_type::ndrange>,
         std::integer_sequence<int,1,2>,
         wrap_integral<MemoryMax>
-        >(256, std::set<uint32_t>{1,92,187,377,757,1515,3033}, 1, std::set<uint>{1,2,4,8,16});
+        >(256, std::set<uint32_t>{1,93,187,377,757,1515,3033}, 1, std::set<uint>{1,2,4,8,16});
+    // Power of 2 tests
     {
         std::set<uint> wg_sizes = {1};
         std::set<uint32_t> flop_trials = {1,2,4,8,16,32,64,128,256,512,1024};
-        std::set<uint> unrolls = {1,2,3,4,5,6,7,8,12,16,32,64,128,192,256,512,1024};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,192,256,512,1024};
         //Runs every permutation of template combination enumerated by std::tuple and std::integral_sequence plus every combination of runtime parameters
         //Skips if kernel does not exist
-        using DataTypes = std::tuple<long,int,double,float>;
+        using DataTypes = std::tuple<signed char,long,int,double,float>;
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -697,93 +789,250 @@ int main(int argc, char *argv[]) {
         >(wg_sizes, flop_trials, 1, unrolls);
     }
     {
-        using NonPow2FloatMax1 = roofline<float,
-                                          wrap_integral<DeviceSelector>,
-                                          wrap_integral<TrialConfig>,
-                                          wrap_integral<KernelType>,
-                                          std::integral_constant<int,1>,
-                                          wrap_integral<MemoryMax>>;
-        NonPow2FloatMax1(1,1009,1,3).run<Verify>();
-        NonPow2FloatMax1(1,605,1,5).run<Verify>();
-        NonPow2FloatMax1(1,431,1,7).run<Verify>();
+        using S1CF = roofline<float,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<TrialConfig>,
+                              wrap_integral<KernelType>,
+                              std::integral_constant<int,1>,
+                              wrap_integral<MemoryMax>>;
+        using S2CF = roofline<float,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<TrialConfig>,
+                              wrap_integral<KernelType>,
+                              std::integral_constant<int,2>,
+                              wrap_integral<MemoryMax>>;
+        S1CF(1,1515,1,1).run<Verify>();
+        S1CF(1,2048,1,1).run<Verify>();
+        S1CF(1,3030,1,1).run<Verify>();
+        S1CF(1,3031,1,1).run<Verify>();
+        S1CF(1,3032,1,1).run<Verify>();
+        S1CF(1,3033,1,1).run<Verify>();
+        S1CF(1,1515,1,2).run<Verify>();
+        S1CF(1,505,1,3).run<Verify>();
+        S1CF(1,1009,1,3).run<Verify>();
+        S1CF(1,757,1,4).run<Verify>();
+        S1CF(1,603,1,5).run<Verify>();
+        S1CF(1,604,1,5).run<Verify>();
+        S1CF(1,605,1,5).run<Verify>();
+        S1CF(1,503,1,6).run<Verify>();
+        S1CF(1,431,1,7).run<Verify>();
+        S1CF(1,377,1,8).run<Verify>();
+        S1CF(1,186,1,16).run<Verify>();
+        S1CF(1,187,1,16).run<Verify>();
+        S1CF(1,92,1,32).run<Verify>();
+        S1CF(1,93,1,32).run<Verify>();
+        S1CF(1,45,1,64).run<Verify>();
+        S1CF(1,21,1,128).run<Verify>();
+        S1CF(1,5,1,256).run<Verify>();
+        S1CF(1,6,1,256).run<Verify>();
+        S1CF(1,3,1,512).run<Verify>();
+
+        S2CF(1,1515,1,1).run<Verify>();
+        S2CF(1,757,1,2).run<Verify>();
+        S2CF(1,503,1,3).run<Verify>();
+        S2CF(1,505,1,3).run<Verify>();
+        S2CF(1,377,1,4).run<Verify>();
+        S2CF(1,256,1,5).run<Verify>();
+        S2CF(1,300,1,5).run<Verify>();
+        S2CF(1,301,1,5).run<Verify>();
+        S2CF(1,250,1,6).run<Verify>();
+        S2CF(1,251,1,6).run<Verify>();
+        S2CF(1,215,1,7).run<Verify>();
+        S2CF(1,186,1,8).run<Verify>();
+        S2CF(1,187,1,8).run<Verify>();
+        S2CF(1,92,1,16).run<Verify>();
+        S2CF(1,93,1,16).run<Verify>();
+        S2CF(1,45,1,32).run<Verify>();
+        S2CF(1,21,1,64).run<Verify>();
+        S2CF(1,9,1,128).run<Verify>();
+        S2CF(1,3,1,256).run<Verify>();
     }
     {
-        using NonPow2FloatMax2 = roofline<float,
-                                          wrap_integral<DeviceSelector>,
-                                          wrap_integral<TrialConfig>,
-                                          wrap_integral<KernelType>,
-                                          std::integral_constant<int,2>,
-                                          wrap_integral<MemoryMax>>;
-        NonPow2FloatMax2(1,503,1,3).run<Verify>();
-        NonPow2FloatMax2(1,300,1,5).run<Verify>();
-        NonPow2FloatMax2(1,301,1,5).run<Verify>();
-        NonPow2FloatMax2(1,250,1,6).run<Verify>();
-        NonPow2FloatMax2(1,251,1,6).run<Verify>();
-        NonPow2FloatMax2(1,215,1,7).run<Verify>();
+        using S1CD = roofline<double,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,1>,
+                              wrap_integral<MemoryMax>>;
+        using S2CD = roofline<double,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,2>,
+                              wrap_integral<MemoryMax>>;
+
+        S1CD(1,314,1,1).run<Verify>();
+        S1CD(1,315,1,1).run<Verify>();
+        S1CD(1,317,1,1).run<Verify>();
+        S1CD(1,159,1,2).run<Verify>();
+        S1CD(1,160,1,2).run<Verify>();
+        S1CD(1,161,1,2).run<Verify>();
+        S1CD(1,162,1,2).run<Verify>();
+        S1CD(1,83,1,4).run<Verify>();
+        S1CD(1,38,1,8).run<Verify>();
+        S1CD(1,15,1,16).run<Verify>();
+        S1CD(1,9,1,32).run<Verify>();
+        S1CD(1,3,1,64).run<Verify>();
+
+        S2CD(1,79,1,1).run<Verify>();
+        S2CD(1,150,1,1).run<Verify>();
+        S2CD(1,155,1,1).run<Verify>();
+        S2CD(1,157,1,1).run<Verify>();
+        S2CD(1,159,1,1).run<Verify>();
+        S2CD(1,39,1,2).run<Verify>();
+        S2CD(1,75,1,2).run<Verify>();
+        S2CD(1,82,1,2).run<Verify>();
+        S2CD(1,83,1,2).run<Verify>();
+        S2CD(1,19,1,4).run<Verify>();
+        S2CD(1,36,1,4).run<Verify>();
+        S2CD(1,38,1,4).run<Verify>();
+        S2CD(1,39,1,4).run<Verify>();
+        S2CD(1,10,1,8).run<Verify>();
+        S2CD(1,12,1,8).run<Verify>();
+        S2CD(1,14,1,8).run<Verify>();
+        S2CD(1,15,1,8).run<Verify>();
+        S2CD(1,7,1,16).run<Verify>();
+        S2CD(1,9,1,16).run<Verify>();
+        S2CD(1,3,1,32).run<Verify>();
+        S2CD(1,5,1,32).run<Verify>();
+    }
+    {
+        using S1CSC = roofline<signed char,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,1>,
+                              wrap_integral<MemoryMax>>;
+        using S2CSC = roofline<signed char,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,2>,
+                              wrap_integral<MemoryMax>>;
+        S1CSC(1,2048,1,1).run<Verify>();
+        S1CSC(1,2304,1,1).run<Verify>();
+        S1CSC(1,2560,1,1).run<Verify>();
+        S1CSC(1,2816,1,1).run<Verify>();
+        S1CSC(1,2944,1,1).run<Verify>();
+        S1CSC(1,3024,1,1).run<Verify>();
+        S1CSC(1,3036,1,1).run<Verify>();
+        S1CSC(1,1,1,2048).run<Verify>();
+    }
+    {
+        using S1CI = roofline<int,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,1>,
+                              wrap_integral<MemoryMax>>;
+        using S2CI = roofline<int,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,2>,
+                              wrap_integral<MemoryMax>>;
+        S1CI(1,1010,1,1).run<Verify>();
+        S1CI(1,505,1,2).run<Verify>();
+        S1CI(1,500,1,2).run<Verify>();
+        S1CI(1,253,1,4).run<Verify>();
+        S1CI(1,125,1,8).run<Verify>();
+        S1CI(1,63,1,16).run<Verify>();
+        S1CI(1,31,1,32).run<Verify>();
+        S1CI(1,15,1,64).run<Verify>();
+        S1CI(1,7,1,128).run<Verify>();
+
+        S2CI(1,500,1,1).run<Verify>();
+        S2CI(1,505,1,1).run<Verify>();
+        S2CI(1,252,1,2).run<Verify>();
+        S2CI(1,253,1,2).run<Verify>();
+        S2CI(1,125,1,4).run<Verify>();
+        S2CI(1,62,1,8).run<Verify>();
+        S2CI(1,63,1,8).run<Verify>();
+        S2CI(1,30,1,16).run<Verify>();
+        S2CI(1,31,1,16).run<Verify>();
+        S2CI(1,15,1,32).run<Verify>();
+        S2CI(1,7,1,64).run<Verify>();
+        S2CI(1,3,1,128).run<Verify>();
+    }
+    {
+        using S1CL = roofline<long,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,1>,
+                              wrap_integral<MemoryMax>>;
+        using S2CL = roofline<long,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,2>,
+                              wrap_integral<MemoryMax>>;
+        S1CL(1,216,1,1).run<Verify>();
+        S1CL(1,220,1,1).run<Verify>();
+        S1CL(1,236,1,1).run<Verify>();
+        S1CL(1,420,1,1).run<Verify>();
+        S1CL(1,425,1,1).run<Verify>();
+        S1CL(1,426,1,1).run<Verify>();
+        S1CL(1,428,1,1).run<Verify>();
+
+        S1CL(1,214,1,2).run<Verify>();
+        S1CL(1,215,1,2).run<Verify>();
+
+        S1CL(1,106,1,4).run<Verify>();
+        S1CL(1,107,1,4).run<Verify>();
+
+        S1CL(1,53,1,8).run<Verify>();
+
+        S1CL(1,27,1,16).run<Verify>();
+
+        S1CL(1,13,1,32).run<Verify>();
+
+        S1CL(1,7,1,64).run<Verify>();
+
+        S2CL(1,92,1,1).run<Verify>();
+        S2CL(1,108,1,1).run<Verify>();
+        S2CL(1,110,1,1).run<Verify>();
+        S2CL(1,120,1,1).run<Verify>();
+        S2CL(1,140,1,1).run<Verify>();
+        S2CL(1,150,1,1).run<Verify>();
+        S2CL(1,170,1,1).run<Verify>();
+        S2CL(1,180,1,1).run<Verify>();
+        S2CL(1,190,1,1).run<Verify>();
+        S2CL(1,200,1,1).run<Verify>();
+        S2CL(1,210,1,1).run<Verify>();
+        S2CL(1,212,1,1).run<Verify>();
+        S2CL(1,213,1,1).run<Verify>();
+        S2CL(1,214,1,1).run<Verify>();
+        S2CL(1,215,1,1).run<Verify>();
+
+        S2CL(1,54,1,2).run<Verify>();
+        S2CL(1,55,1,2).run<Verify>();
+        S2CL(1,106,1,2).run<Verify>();
+        S2CL(1,107,1,2).run<Verify>();
+
+        S2CL(1,27,1,4).run<Verify>();
+        S2CL(1,28,1,4).run<Verify>();
+        S2CL(1,53,1,4).run<Verify>();
+
+        S2CL(1,13,1,8).run<Verify>();
+        S2CL(1,14,1,8).run<Verify>();
+        S2CL(1,26,1,8).run<Verify>();
+        S2CL(1,27,1,8).run<Verify>();
+
+        S2CL(1,6,1,16).run<Verify>();
+        S2CL(1,7,1,16).run<Verify>();
+        S2CL(1,10,1,16).run<Verify>();
+        S2CL(1,12,1,16).run<Verify>();
+        S2CL(1,13,1,16).run<Verify>();
+
+        S2CL(1,3,1,32).run<Verify>();
+        S2CL(1,7,1,32).run<Verify>();
+
+        S2CL(1,3,1,64).run<Verify>();
     }
     {
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {3,5,6,7,187,3032};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
-        nersc::conduct_experiment_ensemble<
-            roofline,
-            Verify,
-            float,
-            wrap_integral<DeviceSelector>,
-            wrap_integral<TrialConfig>,
-            wrap_integral<KernelType>,
-            std::integer_sequence<int,1,2>,
-            wrap_integral<MemoryMax>
-        >(wg_sizes, flop_trials, 1, unrolls);
-    }
-    {
-        std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {1,3,6,7,13,14,16,27,28,54,55,92,108,110,120,216,140,150,170,180,190,200,210,212,213,214,215,426};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
-        nersc::conduct_experiment_ensemble<
-            roofline,
-            Verify,
-            long,
-            wrap_integral<DeviceSelector>,
-            wrap_integral<TrialConfig>,
-            wrap_integral<KernelType>,
-            std::integer_sequence<int,1,2>,
-            wrap_integral<MemoryMax>
-        >(wg_sizes, flop_trials, 1, unrolls);
-    }
-    {
-        std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {3,7,15,30,31,36,62,63,82,125,253,505};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
-        nersc::conduct_experiment_ensemble<
-            roofline,
-            Verify,
-            int,
-            wrap_integral<DeviceSelector>,
-            wrap_integral<TrialConfig>,
-            wrap_integral<KernelType>,
-            std::integer_sequence<int,1,2>,
-            wrap_integral<MemoryMax>
-        >(wg_sizes, flop_trials, 1, unrolls);
-    }
-    {
-        std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {1,3,5,9,15,36,38,39,82,83,155,157,158,159,160,255,314,315,316,317};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
-        nersc::conduct_experiment_ensemble<
-            roofline,
-            Verify,
-            double,
-            wrap_integral<DeviceSelector>,
-            wrap_integral<TrialConfig>,
-            wrap_integral<KernelType>,
-            std::integer_sequence<int,1,2>,
-            wrap_integral<MemoryMax>
-        >(wg_sizes, flop_trials, 1, unrolls);
-    }
-    {
-        std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {5,6,9,11,20,21,23,32,45,47,92,94,186,187,189,377,379,754,757,758,1514,1515,1516,3000,3030,3032};
+        std::set<uint32_t> flop_trials = {1,2,4,8,16,32,64,128,256,512,1024};
         std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256,512};
         std::set<size_t> els_per_bank = {1,2,4,8,16,32,64,128,256,512};
         nersc::conduct_experiment_ensemble<
@@ -798,23 +1047,24 @@ int main(int argc, char *argv[]) {
         >(wg_sizes, flop_trials, 1, unrolls, els_per_bank);
     }
     {
-        std::set<uint32_t> flop_trials = {1,7,16,21,32,45,64,128,186,187,256,377,1024,1515,3031};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256};
-        nersc::conduct_experiment_ensemble<
-            roofline,
-            Verify,
-            float,
-            wrap_integral<DeviceSelector>,
-            wrap_integral<TrialConfig>,
-            wrap_integral<KernelType>,
-            std::integral_constant<int,1>,
-            wrap_integral<MemoryMax>
-        >(1, flop_trials, 1, unrolls);
+        using SLCF = roofline<float,
+                              wrap_integral<DeviceSelector>,
+                              wrap_integral<trial_config::coalesced>,
+                              wrap_integral<opencl_kernel_type::swi>,
+                              std::integral_constant<int,0>,
+                              std::integral_constant<size_t,16_Mi>>;
+        SLCF(1,3032,1,1,1).run<Verify>();
+
+        SLCF(1,186,1,8,1).run<Verify>();
+        SLCF(1,186,1,8,2).run<Verify>();
+        SLCF(1,186,1,8,4).run<Verify>();
+        SLCF(1,186,1,8,8).run<Verify>();
     }
-    {
+    /*{
         std::set<uint> wg_sizes = {1};
-        std::set<uint32_t> flop_trials = {16,92,186,187,512,757,3031,3032};
-        std::set<uint> unrolls = {1,2,4,8,16,32,64,128};
+        std::set<uint32_t> flop_trials = {5,6,9,11,20,21,23,32,45,47,92,94,186,187,189,377,379,754,757,758,1514,1515,1516,3000,3030,3032};
+        std::set<uint> unrolls = {1,2,4,8,16,32,64,128,256,512};
+        std::set<size_t> els_per_bank = {1,2,4,8,16,32,64,128,256,512};
         nersc::conduct_experiment_ensemble<
             roofline,
             Verify,
@@ -822,80 +1072,10 @@ int main(int argc, char *argv[]) {
             wrap_integral<DeviceSelector>,
             wrap_integral<TrialConfig>,
             wrap_integral<KernelType>,
-            std::integral_constant<int,1>,
-            wrap_integral<MemoryMax>
-        >(wg_sizes, flop_trials, 1, unrolls);
-    }
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        float,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{1,2048,3030,3032,3033}, 1, std::set<uint>{1});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        float,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{1,505,506}, 1, std::set<uint>{3});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        float,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{1,603,604}, 1, std::set<uint>{5});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        float,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{1,503}, 1, std::set<uint>{6});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        long,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{140,150,170,180,190,200,210,213}, 1, std::set<uint>{1});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        int,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::swi>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1, std::set<uint32_t>{1,1011}, 1, std::set<uint>{1});
-    nersc::conduct_experiment_ensemble<
-        roofline,
-        Verify,
-        float,
-        wrap_integral<DeviceSelector>,
-        wrap_integral<TrialConfig>,
-        wrap_integral<opencl_kernel_type::ndrange>,
-        std::integral_constant<int,1>,
-        wrap_integral<MemoryMax>
-        >(1<<12, std::set<uint32_t>{1,3033}, 1, 1);
+            std::integral_constant<int,0>,
+            std::integral_constant<size_t,16_Mi>
+        >(wg_sizes, flop_trials, 1, unrolls, els_per_bank);
+    }*/
 
     return 0;
 }

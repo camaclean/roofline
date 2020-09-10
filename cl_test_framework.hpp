@@ -6,6 +6,7 @@
 #include <regex>
 #include <string>
 #include <tuple>
+#include <filesystem>
 
 namespace nersc
 {
@@ -33,7 +34,7 @@ enum class device_selector
     cpu,
     gpu,
     accelerator,
-    intel_fpga, 
+    intel_fpga,
     xilinx_fpga,
     custom,
     all
@@ -249,7 +250,7 @@ std::tuple<cl::Context,cl::Device> init_opencl()
 
 template<>
 std::tuple<cl::Context,cl::Device> init_opencl<device_selector::intel_fpga>()
-{ 
+{
     cl::Context context(opencl_device_type_flag_v<device_selector::intel_fpga>);
     constexpr const char intel_vendor[] = "Intel";
     for (const auto& candidate : context.getInfo<CL_CONTEXT_DEVICES>())
@@ -270,7 +271,7 @@ std::tuple<cl::Context,cl::Device> init_opencl<device_selector::intel_fpga>()
 
 inline std::string make_name(std::string format, const std::map<std::string,std::string>& params)
 {
-    for (auto& [key,value] : params) 
+    for (auto& [key,value] : params)
     {
         format = std::regex_replace(format,std::regex(std::string("\\$\\{") + key + "\\}"),value);
     }
@@ -302,7 +303,7 @@ struct program_loader<DeviceSelector,code_type::source>
         if (!stream.is_open()) {
             throw std::runtime_error(std::string("Cannot open file: ") + filename);
         }
-     
+
         std::string source(
             std::istreambuf_iterator<char>(stream),
             (std::istreambuf_iterator<char>()));
@@ -332,7 +333,7 @@ struct program_loader<DeviceSelector,code_type::binary>
         std::string filename = make_filename<DeviceSelector,code_type::binary>(format,params);
         std::ifstream stream(filename,std::ios::in | std::ios::binary);
         if (!stream.is_open()) {
-            throw std::runtime_error(std::string("Cannot open file: ") + filename);
+            throw std::runtime_error(std::string("Cannot open file ") + filename + ": " + strerror(errno));
         }
 
         stream.ignore(std::numeric_limits<std::streamsize>::max());
@@ -530,7 +531,7 @@ void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *r
 template<size_t I, typename Experiment, bool Verify, typename RuntimeParams, typename Results, typename... Ts, std::enable_if_t<I != std::tuple_size_v<RuntimeParams>>* = nullptr>
 void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *results, Ts&&... args)
 {
-    using param_type = std::remove_reference_t<std::tuple_element_t<I,RuntimeParams>>; 
+    using param_type = std::remove_reference_t<std::tuple_element_t<I,RuntimeParams>>;
     if constexpr (is_iterable_v<param_type>)
     {
         for (auto& param : std::get<I>(std::forward<RuntimeParams>(params)))
@@ -544,7 +545,7 @@ void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *r
             }
         }
     } else {
-        try 
+        try
         {
             conduct_experiment_runtime_ensemble_impl<I+1,Experiment,Verify>(std::forward<RuntimeParams>(params), results, std::forward<Ts>(args)..., std::get<I>(std::forward<RuntimeParams>(params)));
         } catch (std::runtime_error e)
@@ -559,7 +560,7 @@ void conduct_experiment_runtime_ensemble_impl(RuntimeParams&& params, Results *r
 template<typename Experiment, bool Verify, typename... RuntimeParams>
 decltype(auto) conduct_experiment_runtime_ensemble(RuntimeParams&&... params)
 {
-    if constexpr (experiment_has_results_v<Experiment>) 
+    if constexpr (experiment_has_results_v<Experiment>)
     {
         using results_type = decltype(std::declval<Experiment>().results());
         using key_type = std::remove_reference_t<decltype(std::get<0>(std::declval<results_type&>()))>;
@@ -594,8 +595,8 @@ decltype(auto) conduct_experiment_ensemble_impl(Packer<FirstTest,Tests...>, Runt
         auto results = conduct_experiment_ensemble_impl2<Experiment,Verify>(FirstTest{},std::forward<RuntimeParams>(params)...);
         ((results.merge(conduct_experiment_ensemble_impl2<Experiment,Verify>(Tests{},std::forward<RuntimeParams>(params)...)),0),...);
         return results;
-    } 
-    else 
+    }
+    else
     {
         ((conduct_experiment_ensemble_impl2<Experiment,Verify>(Tests{},std::forward<RuntimeParams>(params)...),0),...);
     }
