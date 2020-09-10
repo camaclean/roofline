@@ -11,6 +11,9 @@ roofline_1_power.png: plot_power_roofline_fp.py ert_plot.py
 roofline_power_types.png: plot_power_roofline_types.py ert_plot.py
 	./plot_power_roofline_types.py
 
+roofline_power_types_combined.png: plot_power_roofline_types_combined.py ert_plot.py
+	./plot_power_roofline_types_combined.py
+
 roofline_power_types_unroll.png: plot_power_roofline_types_optimal_unroll.py ert_plot.py
 	./plot_power_roofline_types_optimal_unroll.py
 
@@ -29,13 +32,16 @@ roofline_1.png: plot_roofline_fp.py ert_plot.py
 roofline_types.png: plot_roofline_types.py ert_plot.py
 	./plot_roofline_types.py
 
+roofline_types_combined.png: plot_roofline_types_combined.py ert_plot.py
+	./plot_roofline_types_combined.py
+
 roofline_types_unroll.png: plot_roofline_types_optimal_unroll.py ert_plot.py
 	./plot_roofline_types_optimal_unroll.py
 
 fp_bandwidth.png: plot_bandwidth_fp.py ert_plot.py
 	./plot_bandwidth_fp.py
 
-all: roofline_1_power_gb.png roofline_1_power_gf.png roofline_1_power.png roofline_power_types.png roofline_power_types_unroll.png roofline_resources_power_fp.png roofline_resources_power_types.png roofline_resources_power_types_optimal_unroll.png roofline_1.png roofline_types.png roofline_types_unroll.png fp_bandwidth.png
+all: roofline_1_power_gb.png roofline_1_power_gf.png roofline_1_power.png roofline_power_types.png roofline_power_types_unroll.png roofline_resources_power_fp.png roofline_resources_power_types.png roofline_resources_power_types_optimal_unroll.png roofline_1.png roofline_types.png roofline_types_unroll.png fp_bandwidth.png roofline_types_combined.png roofline_power_types_combined.png
 
 .PHONY: clean
 

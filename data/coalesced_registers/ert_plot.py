@@ -217,7 +217,7 @@ def plot_res_power(df, device, kernel_type, buffers, queue_type, unroll, dtype, 
         data_y.append(el.max_power())
     return plt.plot(data_x, data_y, linetype)
 
-def plot_ert(device, kernel_type, buffers, queue_type, unroll, dtype, linetype, whatx, whaty):
+def plot_ert(device, kernel_type, buffers, queue_type, unroll, dtype, linetype, whatx, whaty, ax=None):
     files={}
     for filepath in glob.iglob(r'logs/%s_%s_%s_%s_%d_*_%s.log' % (device, kernel_type, buffers, queue_type, unroll, dtype)):
         m = re.search(r'%s_%s_%s_%s_%d_(?P<ert_flops>[0-9]+)_(?P<dtype>\w+)\.log' % (device, kernel_type, buffers, queue_type, unroll), filepath)
@@ -230,7 +230,10 @@ def plot_ert(device, kernel_type, buffers, queue_type, unroll, dtype, linetype, 
         el = ErtLog(filepath,powerpath)
         data_x.append(whatx(el))
         data_y.append(whaty(el))
-    return plt.loglog(data_x, data_y, linetype, basex=2, basey=2)
+    if ax is not None:
+        return ax.loglog(data_x, data_y, linetype, basex=2, basey=2)
+    else:
+        return plt.loglog(data_x, data_y, linetype, basex=2, basey=2)
 
 def plot_trials(device, kernel_type, buffers, queue_type, unroll, ert_flop, dtype, linetype, whatx, whaty, graphtype=plt.plot, **kwargs):
     filepath = 'logs/%s_%s_%s_%s_%d_%s_%s.log' % (device, kernel_type, buffers, queue_type, unroll, ert_flop, dtype)
