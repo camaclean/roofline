@@ -1,0 +1,619 @@
+swi,1,coalesced,1024,1,signed char,0,1518,88029,427200
+swi,1,coalesced,128,16,float,1024,1518,114423,427200
+swi,1,coalesced,128,16,signed char,896,1518,77469,427200
+swi,1,coalesced,128,1,double,0,1518,181827,427200
+swi,1,coalesced,128,1,float,128,1518,76639,427200
+swi,1,coalesced,128,1,int,0,1518,75642,427200
+swi,1,coalesced,128,1,long,0,1518,89819,427200
+swi,1,coalesced,128,1,signed char,0,1518,70247,427200
+swi,1,coalesced,128,21,float,1408,1518,124644,427200
+swi,1,coalesced,128,2,long,0,1518,89732,427200
+swi,1,coalesced,128,2,signed char,0,1518,70203,427200
+swi,1,coalesced,128,4,signed char,128,1518,71246,427200
+swi,1,coalesced,128,7,int,768,1518,95156,427200
+swi,1,coalesced,128,8,signed char,384,1518,73489,427200
+swi,1,coalesced,12,1,float,12,1518,71824,427200
+swi,1,coalesced,16,128,float,1024,1518,106514,427200
+swi,1,coalesced,16,128,signed char,1008,1518,70443,427200
+swi,1,coalesced,16,15,double,448,1518,266321,427200
+swi,1,coalesced,16,16,double,448,1518,266276,427200
+swi,1,coalesced,16,16,float,128,1518,67234,427200
+swi,1,coalesced,16,16,int,224,1518,68139,427200
+swi,1,coalesced,16,16,long,672,1518,87167,427200
+swi,1,coalesced,16,16,signed char,112,1518,63479,427200
+swi,1,coalesced,16,186,float,1488,1518,126501,427200
+swi,1,coalesced,16,187,float,1504,1518,125504,427200
+swi,1,coalesced,16,1,float,16,1518,64206,427200
+swi,1,coalesced,16,1,int,0,1518,64102,427200
+swi,1,coalesced,16,1,long,0,1518,71853,427200
+swi,1,coalesced,16,1,signed char,0,1518,62569,427200
+swi,1,coalesced,16,27,long,1248,1518,100467,427200
+swi,1,coalesced,16,2,float,16,1518,62662,427200
+swi,1,coalesced,16,2,int,0,1518,62548,427200
+swi,1,coalesced,16,2,signed char,0,1518,62531,427200
+swi,1,coalesced,16,32,float,256,1518,72591,427200
+swi,1,coalesced,16,32,int,480,1518,74946,427200
+swi,1,coalesced,16,32,signed char,240,1518,64334,427200
+swi,1,coalesced,16,4,float,32,1518,63216,427200
+swi,1,coalesced,16,4,int,32,1518,63324,427200
+swi,1,coalesced,16,4,signed char,16,1518,62704,427200
+swi,1,coalesced,16,63,int,992,1518,90707,427200
+swi,1,coalesced,16,64,float,512,1518,83832,427200
+swi,1,coalesced,16,64,signed char,496,1518,66467,427200
+swi,1,coalesced,16,8,float,64,1518,64752,427200
+swi,1,coalesced,16,8,int,96,1518,65040,427200
+swi,1,coalesced,16,8,signed char,48,1518,62938,427200
+swi,1,coalesced,1,1010,int,1008,1518,105278,427200
+swi,1,coalesced,1,1024,float,512,1518,98769,427200
+swi,1,coalesced,1,1024,signed char,511,1518,66921,427200
+swi,1,coalesced,1,128,double,252,1518,176746,427200
+swi,1,coalesced,1,128,float,64,1518,67071,427200
+swi,1,coalesced,1,128,int,126,1518,69303,427200
+swi,1,coalesced,1,128,long,378,1518,74472,427200
+swi,1,coalesced,1,128,signed char,63,1518,63239,427200
+swi,1,coalesced,1,16,double,28,1518,74612,427200
+swi,1,coalesced,1,16,float,8,1518,62995,427200
+swi,1,coalesced,1,16,int,14,1518,64710,427200
+swi,1,coalesced,1,16,long,42,1518,63758,427200
+swi,1,coalesced,1,16,signed char,7,1518,62782,427200
+swi,1,coalesced,1,1,double,0,1518,64885,427200
+swi,1,coalesced,1,1,float,1,1518,64223,427200
+swi,1,coalesced,1,1,int,0,1518,64173,427200
+swi,1,coalesced,1,1,long,0,1518,64178,427200
+swi,1,coalesced,1,1,signed char,0,1518,62637,427200
+swi,1,coalesced,1,2048,float,1024,1518,136277,427200
+swi,1,coalesced,1,2048,signed char,1023,1518,71312,427200
+swi,1,coalesced,1,216,long,642,1518,85051,427200
+swi,1,coalesced,1,220,long,654,1518,85448,427200
+swi,1,coalesced,1,2304,signed char,1151,1518,72381,427200
+swi,1,coalesced,1,236,long,702,1518,87055,427200
+swi,1,coalesced,1,2560,signed char,1279,1518,73459,427200
+swi,1,coalesced,1,256,double,508,1518,284905,427200
+swi,1,coalesced,1,256,float,128,1518,71719,427200
+swi,1,coalesced,1,256,int,254,1518,74571,427200
+swi,1,coalesced,1,256,long,762,1518,88895,427200
+swi,1,coalesced,1,256,signed char,127,1518,63854,427200
+swi,1,coalesced,1,2816,signed char,1407,1518,74458,427200
+swi,1,coalesced,1,2944,signed char,1471,1518,75653,427200
+swi,1,coalesced,1,2,double,0,1518,63255,427200
+swi,1,coalesced,1,2,float,1,1518,62603,427200
+swi,1,coalesced,1,2,int,0,1518,64303,427200
+swi,1,coalesced,1,2,long,0,1518,62561,427200
+swi,1,coalesced,1,2,signed char,0,1518,62642,427200
+swi,1,coalesced,1,3008,signed char,1503,1518,76009,427200
+swi,1,coalesced,1,3024,signed char,1511,1518,75979,427200
+swi,1,coalesced,1,3028,signed char,1513,1518,76040,427200
+swi,1,coalesced,1,3030,float,1515,1518,170486,427200
+swi,1,coalesced,1,3031,float,1516,1518,170595,427200
+swi,1,coalesced,1,3032,float,1516,1518,170546,427200
+swi,1,coalesced,1,3032,signed char,1515,1518,76009,427200
+swi,1,coalesced,1,3033,float,1517,1518,170700,427200
+swi,1,coalesced,1,3036,signed char,1517,1518,76133,427200
+swi,1,coalesced,1,314,double,624,1518,339398,427200
+swi,1,coalesced,1,315,double,628,1518,342987,427200
+swi,1,coalesced,1,317,double,632,1518,346528,427200
+swi,1,coalesced,1,32,double,60,1518,88462,427200
+swi,1,coalesced,1,32,float,16,1518,63638,427200
+swi,1,coalesced,1,32,int,30,1518,65373,427200
+swi,1,coalesced,1,32,long,90,1518,65333,427200
+swi,1,coalesced,1,32,signed char,15,1518,62805,427200
+swi,1,coalesced,1,420,long,1471,1518,194588,427200
+swi,1,coalesced,1,425,long,1485,1518,195119,427200
+swi,1,coalesced,1,426,long,1492,1518,196268,427200
+swi,1,coalesced,1,428,long,1278,1518,105350,427200
+swi,1,coalesced,1,4,double,4,1518,64744,427200
+swi,1,coalesced,1,4,float,2,1518,62666,427200
+swi,1,coalesced,1,4,int,2,1518,64280,427200
+swi,1,coalesced,1,4,long,6,1518,62604,427200
+swi,1,coalesced,1,4,signed char,1,1518,62607,427200
+swi,1,coalesced,1,512,float,256,1518,81374,427200
+swi,1,coalesced,1,512,int,510,1518,85378,427200
+swi,1,coalesced,1,512,signed char,255,1518,65097,427200
+swi,1,coalesced,1,64,double,124,1518,117113,427200
+swi,1,coalesced,1,64,float,32,1518,64852,427200
+swi,1,coalesced,1,64,int,62,1518,66674,427200
+swi,1,coalesced,1,64,long,186,1518,68331,427200
+swi,1,coalesced,1,64,signed char,31,1518,62963,427200
+swi,1,coalesced,1,8,double,12,1518,68009,427200
+swi,1,coalesced,1,8,float,4,1518,62778,427200
+swi,1,coalesced,1,8,int,6,1518,64392,427200
+swi,1,coalesced,1,8,long,18,1518,63110,427200
+swi,1,coalesced,1,8,signed char,3,1518,62649,427200
+swi,1,coalesced,2048,1,signed char,0,1518,117597,427200
+swi,1,coalesced,24,1,float,24,1518,82125,427200
+swi,1,coalesced,256,1,double,0,1518,297120,427200
+swi,1,coalesced,256,1,float,256,1518,91855,427200
+swi,1,coalesced,256,1,int,0,1518,89663,427200
+swi,1,coalesced,256,1,signed char,0,1518,66087,427200
+swi,1,coalesced,256,2,float,256,1518,91838,427200
+swi,1,coalesced,256,2,signed char,0,1518,66115,427200
+swi,1,coalesced,256,4,float,512,1518,102262,427200
+swi,1,coalesced,256,4,signed char,256,1518,68836,427200
+swi,1,coalesced,256,5,float,768,1518,111455,427200
+swi,1,coalesced,256,6,float,768,1518,113682,427200
+swi,1,coalesced,256,8,signed char,768,1518,73062,427200
+swi,1,coalesced,2,1024,float,1024,1518,120389,427200
+swi,1,coalesced,2,1024,signed char,1022,1518,70917,427200
+swi,1,coalesced,2,128,float,128,1518,69494,427200
+swi,1,coalesced,2,128,long,756,1518,84874,427200
+swi,1,coalesced,2,128,signed char,126,1518,63779,427200
+swi,1,coalesced,2,1515,float,1516,1518,147163,427200
+swi,1,coalesced,2,159,double,632,1518,341789,427200
+swi,1,coalesced,2,160,double,632,1518,342026,427200
+swi,1,coalesced,2,161,double,640,1518,345809,427200
+swi,1,coalesced,2,162,double,640,1518,345320,427200
+swi,1,coalesced,2,16,float,16,1518,63300,427200
+swi,1,coalesced,2,16,signed char,14,1518,62884,427200
+swi,1,coalesced,2,1,float,2,1518,64261,427200
+swi,1,coalesced,2,1,int,0,1518,64207,427200
+swi,1,coalesced,2,1,long,0,1518,64189,427200
+swi,1,coalesced,2,1,signed char,0,1518,62700,427200
+swi,1,coalesced,2,214,long,1272,1518,99099,427200
+swi,1,coalesced,2,215,long,1284,1518,99410,427200
+swi,1,coalesced,2,256,float,256,1518,77134,427200
+swi,1,coalesced,2,256,signed char,254,1518,64843,427200
+swi,1,coalesced,2,2,float,2,1518,62655,427200
+swi,1,coalesced,2,2,signed char,0,1518,62676,427200
+swi,1,coalesced,2,32,float,32,1518,64196,427200
+swi,1,coalesced,2,32,signed char,30,1518,62828,427200
+swi,1,coalesced,2,4,float,4,1518,62714,427200
+swi,1,coalesced,2,4,signed char,2,1518,62710,427200
+swi,1,coalesced,2,505,int,1008,1518,98151,427200
+swi,1,coalesced,2,512,float,512,1518,91424,427200
+swi,1,coalesced,2,512,signed char,510,1518,67011,427200
+swi,1,coalesced,2,64,float,64,1518,66125,427200
+swi,1,coalesced,2,64,signed char,62,1518,63216,427200
+swi,1,coalesced,2,8,float,8,1518,62866,427200
+swi,1,coalesced,2,8,signed char,6,1518,62616,427200
+swi,1,coalesced,32,13,long,1152,1518,93015,427200
+swi,1,coalesced,32,16,float,256,1518,80407,427200
+swi,1,coalesced,32,16,signed char,224,1518,64429,427200
+swi,1,coalesced,32,1,float,32,1518,72043,427200
+swi,1,coalesced,32,1,int,0,1518,71925,427200
+swi,1,coalesced,32,1,long,0,1518,68275,427200
+swi,1,coalesced,32,1,signed char,0,1518,62569,427200
+swi,1,coalesced,32,2,float,32,1518,70526,427200
+swi,1,coalesced,32,2,signed char,0,1518,62607,427200
+swi,1,coalesced,32,31,int,960,1518,96934,427200
+swi,1,coalesced,32,32,float,512,1518,91127,427200
+swi,1,coalesced,32,32,signed char,480,1518,66141,427200
+swi,1,coalesced,32,4,float,64,1518,71815,427200
+swi,1,coalesced,32,4,signed char,32,1518,62857,427200
+swi,1,coalesced,32,64,float,1024,1518,112707,427200
+swi,1,coalesced,32,64,signed char,992,1518,70254,427200
+swi,1,coalesced,32,8,float,128,1518,74857,427200
+swi,1,coalesced,32,8,long,576,1518,81195,427200
+swi,1,coalesced,32,8,signed char,96,1518,63452,427200
+swi,1,coalesced,32,92,float,1472,1518,132420,427200
+swi,1,coalesced,32,93,float,1504,1518,131314,427200
+swi,1,coalesced,32,9,double,512,1518,311579,427200
+swi,1,coalesced,3,1009,float,1515,1518,144936,427200
+swi,1,coalesced,3,1,float,3,1518,69819,427200
+swi,1,coalesced,3,505,float,759,1518,108024,427200
+swi,1,coalesced,48,1,float,48,1518,83226,427200
+swi,1,coalesced,4,106,long,1248,1518,95360,427200
+swi,1,coalesced,4,107,long,1272,1518,95971,427200
+swi,1,coalesced,4,128,float,256,1518,74839,427200
+swi,1,coalesced,4,128,signed char,252,1518,64620,427200
+swi,1,coalesced,4,16,float,32,1518,63816,427200
+swi,1,coalesced,4,16,signed char,28,1518,62904,427200
+swi,1,coalesced,4,1,float,4,1518,64152,427200
+swi,1,coalesced,4,1,int,0,1518,64237,427200
+swi,1,coalesced,4,1,long,0,1518,64283,427200
+swi,1,coalesced,4,1,signed char,0,1518,62668,427200
+swi,1,coalesced,4,253,int,1008,1518,94332,427200
+swi,1,coalesced,4,256,float,512,1518,87808,427200
+swi,1,coalesced,4,256,signed char,508,1518,66792,427200
+swi,1,coalesced,4,2,float,4,1518,62630,427200
+swi,1,coalesced,4,2,signed char,0,1518,62717,427200
+swi,1,coalesced,4,32,float,64,1518,65336,427200
+swi,1,coalesced,4,32,signed char,60,1518,63014,427200
+swi,1,coalesced,4,4,float,8,1518,62820,427200
+swi,1,coalesced,4,4,signed char,4,1518,62621,427200
+swi,1,coalesced,4,512,float,1024,1518,112816,427200
+swi,1,coalesced,4,512,signed char,1020,1518,70939,427200
+swi,1,coalesced,4,64,float,128,1518,68786,427200
+swi,1,coalesced,4,64,long,744,1518,82766,427200
+swi,1,coalesced,4,64,signed char,124,1518,63654,427200
+swi,1,coalesced,4,757,float,1516,1518,135233,427200
+swi,1,coalesced,4,83,double,656,1518,352267,427200
+swi,1,coalesced,4,8,float,16,1518,63192,427200
+swi,1,coalesced,4,8,signed char,12,1518,62665,427200
+swi,1,coalesced,512,1,int,0,1518,118790,427200
+swi,1,coalesced,512,1,signed char,0,1518,73660,427200
+swi,1,coalesced,512,2,float,512,1518,124620,427200
+swi,1,coalesced,512,2,signed char,0,1518,73695,427200
+swi,1,coalesced,512,3,float,1024,1518,143644,427200
+swi,1,coalesced,512,4,signed char,512,1518,78070,427200
+swi,1,coalesced,5,1,float,5,1518,71662,427200
+swi,1,coalesced,5,603,float,1510,1518,139748,427200
+swi,1,coalesced,5,604,float,1510,1518,139762,427200
+swi,1,coalesced,5,605,float,1515,1518,140043,427200
+swi,1,coalesced,64,15,int,896,1518,90381,427200
+swi,1,coalesced,64,16,signed char,448,1518,66009,427200
+swi,1,coalesced,64,1,float,64,1518,68704,427200
+swi,1,coalesced,64,1,int,0,1518,68256,427200
+swi,1,coalesced,64,1,long,0,1518,75629,427200
+swi,1,coalesced,64,1,signed char,0,1518,62461,427200
+swi,1,coalesced,64,2,signed char,0,1518,62522,427200
+swi,1,coalesced,64,32,float,1024,1518,109989,427200
+swi,1,coalesced,64,32,signed char,960,1518,69830,427200
+swi,1,coalesced,64,3,double,256,1518,232745,427200
+swi,1,coalesced,64,45,float,1472,1518,123210,427200
+swi,1,coalesced,64,4,long,384,1518,83878,427200
+swi,1,coalesced,64,4,signed char,64,1518,63002,427200
+swi,1,coalesced,64,7,long,1152,1518,101238,427200
+swi,1,coalesced,64,8,signed char,192,1518,64088,427200
+swi,1,coalesced,6,1,float,6,1518,71331,427200
+swi,1,coalesced,6,503,float,1512,1518,138254,427200
+swi,1,coalesced,7,1,float,7,1518,71938,427200
+swi,1,coalesced,7,431,float,1512,1518,137778,427200
+swi,1,coalesced,8,125,int,992,1518,91790,427200
+swi,1,coalesced,8,128,float,512,1518,85180,427200
+swi,1,coalesced,8,128,signed char,504,1518,66509,427200
+swi,1,coalesced,8,16,double,224,1518,166800,427200
+swi,1,coalesced,8,16,float,64,1518,65017,427200
+swi,1,coalesced,8,16,long,336,1518,70015,427200
+swi,1,coalesced,8,16,signed char,56,1518,63090,427200
+swi,1,coalesced,8,1,double,0,1518,69552,427200
+swi,1,coalesced,8,1,float,8,1518,64267,427200
+swi,1,coalesced,8,1,int,0,1518,64242,427200
+swi,1,coalesced,8,1,long,0,1518,64069,427200
+swi,1,coalesced,8,1,signed char,0,1518,62654,427200
+swi,1,coalesced,8,256,float,1024,1518,108398,427200
+swi,1,coalesced,8,256,signed char,1016,1518,70664,427200
+swi,1,coalesced,8,2,double,0,1518,67987,427200
+swi,1,coalesced,8,2,float,8,1518,62679,427200
+swi,1,coalesced,8,2,long,0,1518,62532,427200
+swi,1,coalesced,8,2,signed char,0,1518,62619,427200
+swi,1,coalesced,8,32,double,480,1518,272070,427200
+swi,1,coalesced,8,32,float,128,1518,67733,427200
+swi,1,coalesced,8,32,long,720,1518,81174,427200
+swi,1,coalesced,8,32,signed char,120,1518,63466,427200
+swi,1,coalesced,8,377,float,1512,1518,129295,427200
+swi,1,coalesced,8,38,double,576,1518,317989,427200
+swi,1,coalesced,8,4,double,32,1518,81121,427200
+swi,1,coalesced,8,4,float,16,1518,63050,427200
+swi,1,coalesced,8,4,long,48,1518,63521,427200
+swi,1,coalesced,8,4,signed char,8,1518,62664,427200
+swi,1,coalesced,8,53,long,1248,1518,93624,427200
+swi,1,coalesced,8,64,float,256,1518,73521,427200
+swi,1,coalesced,8,64,signed char,248,1518,64542,427200
+swi,1,coalesced,8,8,double,96,1518,107959,427200
+swi,1,coalesced,8,8,float,32,1518,63766,427200
+swi,1,coalesced,8,8,long,144,1518,65807,427200
+swi,1,coalesced,8,8,signed char,24,1518,62778,427200
+swi,1,coalesced,96,1,float,96,1518,101539,427200
+swi,2,coalesced,1024,1,signed char,0,1518,118012,427200
+swi,2,coalesced,1024,2,signed char,0,1518,117883,427200
+swi,2,coalesced,128,1,float,256,1518,94061,427200
+swi,2,coalesced,128,1,int,0,1518,91275,427200
+swi,2,coalesced,128,1,long,0,1518,120710,427200
+swi,2,coalesced,128,1,signed char,0,1518,67179,427200
+swi,2,coalesced,128,2,float,256,1518,93873,427200
+swi,2,coalesced,128,2,int,0,1518,91362,427200
+swi,2,coalesced,128,2,signed char,0,1518,67225,427200
+swi,2,coalesced,128,3,int,512,1518,104044,427200
+swi,2,coalesced,128,4,float,512,1518,103691,427200
+swi,2,coalesced,128,4,signed char,256,1518,69334,427200
+swi,2,coalesced,128,8,float,1024,1518,124522,427200
+swi,2,coalesced,128,8,signed char,768,1518,73848,427200
+swi,2,coalesced,128,9,float,1280,1518,133194,427200
+swi,2,coalesced,16,10,long,768,1518,86913,427200
+swi,2,coalesced,16,12,long,960,1518,91335,427200
+swi,2,coalesced,16,13,long,1152,1518,94513,427200
+swi,2,coalesced,16,16,float,256,1518,78695,427200
+swi,2,coalesced,16,16,int,448,1518,80481,427200
+swi,2,coalesced,16,16,signed char,224,1518,68433,427200
+swi,2,coalesced,16,1,double,0,1518,92617,427200
+swi,2,coalesced,16,1,float,32,1518,69590,427200
+swi,2,coalesced,16,1,int,0,1518,69220,427200
+swi,2,coalesced,16,1,long,0,1518,69575,427200
+swi,2,coalesced,16,1,signed char,0,1518,66650,427200
+swi,2,coalesced,16,2,double,0,1518,92487,427200
+swi,2,coalesced,16,2,float,32,1518,69619,427200
+swi,2,coalesced,16,2,long,0,1518,69605,427200
+swi,2,coalesced,16,2,signed char,0,1518,66655,427200
+swi,2,coalesced,16,30,int,896,1518,92119,427200
+swi,2,coalesced,16,31,int,960,1518,93917,427200
+swi,2,coalesced,16,32,float,512,1518,89382,427200
+swi,2,coalesced,16,32,signed char,480,1518,70278,427200
+swi,2,coalesced,16,4,double,128,1518,146131,427200
+swi,2,coalesced,16,4,float,64,1518,70827,427200
+swi,2,coalesced,16,4,long,192,1518,74227,427200
+swi,2,coalesced,16,4,signed char,32,1518,66876,427200
+swi,2,coalesced,16,64,float,1024,1518,109650,427200
+swi,2,coalesced,16,64,signed char,992,1518,74314,427200
+swi,2,coalesced,16,6,long,384,1518,78278,427200
+swi,2,coalesced,16,7,double,384,1518,254566,427200
+swi,2,coalesced,16,7,long,576,1518,82594,427200
+swi,2,coalesced,16,8,double,384,1518,253126,427200
+swi,2,coalesced,16,8,float,128,1518,73478,427200
+swi,2,coalesced,16,8,long,576,1518,82704,427200
+swi,2,coalesced,16,8,signed char,96,1518,67418,427200
+swi,2,coalesced,16,92,float,1472,1518,129520,427200
+swi,2,coalesced,16,93,float,1504,1518,127918,427200
+swi,2,coalesced,16,9,double,512,1518,312694,427200
+swi,2,coalesced,1,1024,float,1024,1518,126048,427200
+swi,2,coalesced,1,1024,signed char,1022,1518,75188,427200
+swi,2,coalesced,1,108,long,636,1518,86674,427200
+swi,2,coalesced,1,110,long,648,1518,86959,427200
+swi,2,coalesced,1,120,long,708,1518,88667,427200
+swi,2,coalesced,1,128,double,504,1518,285170,427200
+swi,2,coalesced,1,128,float,128,1518,76648,427200
+swi,2,coalesced,1,128,int,252,1518,77829,427200
+swi,2,coalesced,1,128,long,756,1518,89974,427200
+swi,2,coalesced,1,128,signed char,126,1518,67805,427200
+swi,2,coalesced,1,140,long,828,1518,91999,427200
+swi,2,coalesced,1,150,double,592,1518,326016,427200
+swi,2,coalesced,1,150,long,888,1518,93516,427200
+swi,2,coalesced,1,1515,float,1516,1518,152167,427200
+swi,2,coalesced,1,1515,float def,1516,1518,116133,427200
+swi,2,coalesced,1,1515,float regbc,1516,1518,152167,427200
+swi,2,coalesced,1,155,double,616,1518,337162,427200
+swi,2,coalesced,1,157,double,624,1518,340336,427200
+swi,2,coalesced,1,159,double,632,1518,344036,427200
+swi,2,coalesced,1,16,double,56,1518,93832,427200
+swi,2,coalesced,1,16,float,16,1518,70307,427200
+swi,2,coalesced,1,16,int,28,1518,70276,427200
+swi,2,coalesced,1,16,long,84,1518,71510,427200
+swi,2,coalesced,1,16,signed char,14,1518,66967,427200
+swi,2,coalesced,1,170,long,1008,1518,96859,427200
+swi,2,coalesced,1,180,long,1068,1518,98441,427200
+swi,2,coalesced,1,190,long,1128,1518,100196,427200
+swi,2,coalesced,1,1,double,0,1518,70394,427200
+swi,2,coalesced,1,1,float,2,1518,69438,427200
+swi,2,coalesced,1,1,float def,2,1518,69495,427200
+swi,2,coalesced,1,1,float def regb,2,1518,69495,427200
+swi,2,coalesced,1,1,int,0,1518,69401,427200
+swi,2,coalesced,1,1,long,0,1518,69579,427200
+swi,2,coalesced,1,1,signed char,0,1518,66762,427200
+swi,2,coalesced,1,200,long,1188,1518,101775,427200
+swi,2,coalesced,1,210,long,1248,1518,103340,427200
+swi,2,coalesced,1,212,long,1260,1518,103821,427200
+swi,2,coalesced,1,213,long,1272,1518,103991,427200
+swi,2,coalesced,1,214,long,1272,1518,103974,427200
+swi,2,coalesced,1,215,long,1284,1518,104340,427200
+swi,2,coalesced,1,256,float,256,1518,83726,427200
+swi,2,coalesced,1,256,int,508,1518,86372,427200
+swi,2,coalesced,1,256,signed char,254,1518,69007,427200
+swi,2,coalesced,1,2,double,0,1518,70439,427200
+swi,2,coalesced,1,2,float,2,1518,69466,427200
+swi,2,coalesced,1,2,int,0,1518,69357,427200
+swi,2,coalesced,1,2,long,0,1518,69410,427200
+swi,2,coalesced,1,2,signed char,0,1518,66769,427200
+swi,2,coalesced,1,32,double,120,1518,121748,427200
+swi,2,coalesced,1,32,float,32,1518,71082,427200
+swi,2,coalesced,1,32,int,60,1518,71526,427200
+swi,2,coalesced,1,32,long,180,1518,74166,427200
+swi,2,coalesced,1,32,signed char,30,1518,67029,427200
+swi,2,coalesced,1,4,double,8,1518,73823,427200
+swi,2,coalesced,1,4,float,4,1518,69535,427200
+swi,2,coalesced,1,4,int,4,1518,69618,427200
+swi,2,coalesced,1,4,long,12,1518,69649,427200
+swi,2,coalesced,1,4,signed char,2,1518,66749,427200
+swi,2,coalesced,1,500,int,996,1518,102663,427200
+swi,2,coalesced,1,505,int,1008,1518,103146,427200
+swi,2,coalesced,1,512,float,512,1518,97910,427200
+swi,2,coalesced,1,512,signed char,510,1518,71216,427200
+swi,2,coalesced,1,64,double,248,1518,181277,427200
+swi,2,coalesced,1,64,float,64,1518,72862,427200
+swi,2,coalesced,1,64,int,124,1518,73629,427200
+swi,2,coalesced,1,64,long,372,1518,79515,427200
+swi,2,coalesced,1,64,signed char,62,1518,67249,427200
+swi,2,coalesced,1,79,double,312,1518,210182,427200
+swi,2,coalesced,1,8,double,24,1518,80468,427200
+swi,2,coalesced,1,8,float,8,1518,69830,427200
+swi,2,coalesced,1,8,int,12,1518,69834,427200
+swi,2,coalesced,1,8,long,36,1518,70304,427200
+swi,2,coalesced,1,8,signed char,6,1518,66798,427200
+swi,2,coalesced,1,92,long,540,1518,83949,427200
+swi,2,coalesced,256,1,float,512,1518,122965,427200
+swi,2,coalesced,256,1,int,0,1518,120586,427200
+swi,2,coalesced,256,1,signed char,0,1518,74591,427200
+swi,2,coalesced,256,2,float,512,1518,124696,427200
+swi,2,coalesced,256,2,signed char,0,1518,74603,427200
+swi,2,coalesced,256,3,float,1024,1518,143689,427200
+swi,2,coalesced,256,4,signed char,512,1518,78911,427200
+swi,2,coalesced,2,106,long,1248,1518,100248,427200
+swi,2,coalesced,2,107,long,1272,1518,100827,427200
+swi,2,coalesced,2,128,float,256,1518,81348,427200
+swi,2,coalesced,2,128,int,504,1518,84272,427200
+swi,2,coalesced,2,128,signed char,252,1518,68899,427200
+swi,2,coalesced,2,16,double,112,1518,119032,427200
+swi,2,coalesced,2,16,float,32,1518,70811,427200
+swi,2,coalesced,2,16,int,56,1518,71075,427200
+swi,2,coalesced,2,16,long,168,1518,73314,427200
+swi,2,coalesced,2,16,signed char,28,1518,67149,427200
+swi,2,coalesced,2,1,double,0,1518,71909,427200
+swi,2,coalesced,2,1,float,4,1518,69425,427200
+swi,2,coalesced,2,1,int,0,1518,69399,427200
+swi,2,coalesced,2,1,long,0,1518,69050,427200
+swi,2,coalesced,2,1,signed char,0,1518,66810,427200
+swi,2,coalesced,2,252,int,1000,1518,98916,427200
+swi,2,coalesced,2,253,int,1008,1518,99186,427200
+swi,2,coalesced,2,256,float,512,1518,94402,427200
+swi,2,coalesced,2,256,signed char,508,1518,70962,427200
+swi,2,coalesced,2,2,double,0,1518,71865,427200
+swi,2,coalesced,2,2,float,4,1518,69433,427200
+swi,2,coalesced,2,2,int,0,1518,69448,427200
+swi,2,coalesced,2,2,long,0,1518,69032,427200
+swi,2,coalesced,2,2,signed char,0,1518,66884,427200
+swi,2,coalesced,2,32,double,240,1518,175705,427200
+swi,2,coalesced,2,32,float,64,1518,72256,427200
+swi,2,coalesced,2,32,int,120,1518,72981,427200
+swi,2,coalesced,2,32,long,360,1518,78262,427200
+swi,2,coalesced,2,32,signed char,60,1518,67251,427200
+swi,2,coalesced,2,39,double,304,1518,206658,427200
+swi,2,coalesced,2,4,double,16,1518,78599,427200
+swi,2,coalesced,2,4,float,8,1518,69676,427200
+swi,2,coalesced,2,4,int,8,1518,69770,427200
+swi,2,coalesced,2,4,long,24,1518,69622,427200
+swi,2,coalesced,2,4,signed char,4,1518,66873,427200
+swi,2,coalesced,2,512,float,1024,1518,117806,427200
+swi,2,coalesced,2,512,signed char,1020,1518,75240,427200
+swi,2,coalesced,2,54,long,624,1518,84697,427200
+swi,2,coalesced,2,55,long,648,1518,85230,427200
+swi,2,coalesced,2,64,double,496,1518,281641,427200
+swi,2,coalesced,2,64,float,128,1518,75732,427200
+swi,2,coalesced,2,64,int,248,1518,76748,427200
+swi,2,coalesced,2,64,long,744,1518,87746,427200
+swi,2,coalesced,2,64,signed char,124,1518,67715,427200
+swi,2,coalesced,2,757,float,1516,1518,140202,427200
+swi,2,coalesced,2,75,double,592,1518,323578,427200
+swi,2,coalesced,2,82,double,640,1518,347838,427200
+swi,2,coalesced,2,83,double,656,1518,355246,427200
+swi,2,coalesced,2,8,double,48,1518,91528,427200
+swi,2,coalesced,2,8,float,16,1518,70168,427200
+swi,2,coalesced,2,8,int,24,1518,70232,427200
+swi,2,coalesced,2,8,long,72,1518,71216,427200
+swi,2,coalesced,2,8,signed char,12,1518,66921,427200
+swi,2,coalesced,32,15,int,896,1518,91753,427200
+swi,2,coalesced,32,16,float,512,1518,87798,427200
+swi,2,coalesced,32,16,signed char,448,1518,70319,427200
+swi,2,coalesced,32,1,double,0,1518,122913,427200
+swi,2,coalesced,32,1,float,64,1518,70310,427200
+swi,2,coalesced,32,1,int,0,1518,69691,427200
+swi,2,coalesced,32,1,long,0,1518,76925,427200
+swi,2,coalesced,32,1,signed char,0,1518,66636,427200
+swi,2,coalesced,32,2,double,0,1518,122850,427200
+swi,2,coalesced,32,2,float,64,1518,70272,427200
+swi,2,coalesced,32,2,int,0,1518,69595,427200
+swi,2,coalesced,32,2,long,0,1518,76981,427200
+swi,2,coalesced,32,2,signed char,0,1518,66652,427200
+swi,2,coalesced,32,32,float,1024,1518,108422,427200
+swi,2,coalesced,32,32,signed char,960,1518,73965,427200
+swi,2,coalesced,32,3,double,256,1518,233977,427200
+swi,2,coalesced,32,3,long,384,1518,85385,427200
+swi,2,coalesced,32,45,float,1472,1518,124237,427200
+swi,2,coalesced,32,4,double,256,1518,233987,427200
+swi,2,coalesced,32,4,float,128,1518,73180,427200
+swi,2,coalesced,32,4,int,128,1518,72908,427200
+swi,2,coalesced,32,4,long,384,1518,85380,427200
+swi,2,coalesced,32,4,signed char,64,1518,67239,427200
+swi,2,coalesced,32,5,double,512,1518,341744,427200
+swi,2,coalesced,32,7,long,1152,1518,102448,427200
+swi,2,coalesced,32,8,float,256,1518,77914,427200
+swi,2,coalesced,32,8,int,384,1518,79451,427200
+swi,2,coalesced,32,8,signed char,192,1518,68365,427200
+swi,2,coalesced,3,1,float,6,1518,76859,427200
+swi,2,coalesced,3,503,float,1512,1518,143965,427200
+swi,2,coalesced,4,125,int,992,1518,96778,427200
+swi,2,coalesced,4,128,float,512,1518,92093,427200
+swi,2,coalesced,4,128,signed char,504,1518,70799,427200
+swi,2,coalesced,4,16,double,224,1518,173298,427200
+swi,2,coalesced,4,16,float,64,1518,71731,427200
+swi,2,coalesced,4,16,int,112,1518,72324,427200
+swi,2,coalesced,4,16,long,336,1518,77245,427200
+swi,2,coalesced,4,16,signed char,56,1518,67142,427200
+swi,2,coalesced,4,19,double,288,1518,202219,427200
+swi,2,coalesced,4,1,double,0,1518,75310,427200
+swi,2,coalesced,4,1,float,8,1518,69486,427200
+swi,2,coalesced,4,1,int,0,1518,68958,427200
+swi,2,coalesced,4,1,long,0,1518,69333,427200
+swi,2,coalesced,4,1,signed char,0,1518,66752,427200
+swi,2,coalesced,4,256,float,1024,1518,113249,427200
+swi,2,coalesced,4,256,signed char,1016,1518,74868,427200
+swi,2,coalesced,4,27,long,624,1518,83964,427200
+swi,2,coalesced,4,28,long,624,1518,83925,427200
+swi,2,coalesced,4,2,double,0,1518,75312,427200
+swi,2,coalesced,4,2,float,8,1518,69442,427200
+swi,2,coalesced,4,2,int,0,1518,69006,427200
+swi,2,coalesced,4,2,long,0,1518,69347,427200
+swi,2,coalesced,4,2,signed char,0,1518,66754,427200
+swi,2,coalesced,4,32,double,480,1518,276317,427200
+swi,2,coalesced,4,32,float,128,1518,74807,427200
+swi,2,coalesced,4,32,int,240,1518,75892,427200
+swi,2,coalesced,4,32,long,720,1518,86270,427200
+swi,2,coalesced,4,32,signed char,120,1518,67666,427200
+swi,2,coalesced,4,36,double,544,1518,306315,427200
+swi,2,coalesced,4,377,float,1512,1518,134189,427200
+swi,2,coalesced,4,38,double,576,1518,320945,427200
+swi,2,coalesced,4,39,double,608,1518,335420,427200
+swi,2,coalesced,4,4,double,32,1518,87881,427200
+swi,2,coalesced,4,4,float,16,1518,69533,427200
+swi,2,coalesced,4,4,int,16,1518,69434,427200
+swi,2,coalesced,4,4,long,48,1518,70537,427200
+swi,2,coalesced,4,4,signed char,8,1518,66824,427200
+swi,2,coalesced,4,53,long,1248,1518,98710,427200
+swi,2,coalesced,4,64,float,256,1518,80486,427200
+swi,2,coalesced,4,64,int,496,1518,82952,427200
+swi,2,coalesced,4,64,signed char,248,1518,68679,427200
+swi,2,coalesced,4,8,double,96,1518,114802,427200
+swi,2,coalesced,4,8,float,32,1518,70533,427200
+swi,2,coalesced,4,8,int,48,1518,70727,427200
+swi,2,coalesced,4,8,long,144,1518,72871,427200
+swi,2,coalesced,4,8,signed char,24,1518,66954,427200
+swi,2,coalesced,512,1,float,1024,1518,189371,427200
+swi,2,coalesced,512,2,signed char,0,1518,88537,427200
+swi,2,coalesced,5,1,float,10,1518,78937,427200
+swi,2,coalesced,5,300,float,1500,1518,143792,427200
+swi,2,coalesced,5,301,float,1510,1518,142242,427200
+swi,2,coalesced,64,16,float,1024,1518,112484,427200
+swi,2,coalesced,64,16,signed char,896,1518,73572,427200
+swi,2,coalesced,64,1,double,0,1518,183522,427200
+swi,2,coalesced,64,1,float,128,1518,77951,427200
+swi,2,coalesced,64,1,int,0,1518,76881,427200
+swi,2,coalesced,64,1,long,0,1518,91360,427200
+swi,2,coalesced,64,1,signed char,0,1518,66438,427200
+swi,2,coalesced,64,21,float,1408,1518,125695,427200
+swi,2,coalesced,64,2,float,128,1518,77980,427200
+swi,2,coalesced,64,2,int,0,1518,76865,427200
+swi,2,coalesced,64,2,long,0,1518,91348,427200
+swi,2,coalesced,64,2,signed char,0,1518,66458,427200
+swi,2,coalesced,64,3,long,768,1518,108454,427200
+swi,2,coalesced,64,4,float,256,1518,83116,427200
+swi,2,coalesced,64,4,int,256,1518,83255,427200
+swi,2,coalesced,64,4,signed char,128,1518,67507,427200
+swi,2,coalesced,64,7,int,768,1518,96440,427200
+swi,2,coalesced,64,8,float,512,1518,93717,427200
+swi,2,coalesced,64,8,signed char,384,1518,69602,427200
+swi,2,coalesced,6,1,float,12,1518,78146,427200
+swi,2,coalesced,6,250,float,1500,1518,142487,427200
+swi,2,coalesced,6,251,float,1512,1518,140739,427200
+swi,2,coalesced,7,1,float,14,1518,79624,427200
+swi,2,coalesced,7,215,float,1512,1518,141434,427200
+swi,2,coalesced,8,10,double,256,1518,192929,427200
+swi,2,coalesced,8,128,float,1024,1518,111988,427200
+swi,2,coalesced,8,128,signed char,1008,1518,74628,427200
+swi,2,coalesced,8,12,double,320,1518,222093,427200
+swi,2,coalesced,8,13,long,576,1518,81963,427200
+swi,2,coalesced,8,14,double,384,1518,253150,427200
+swi,2,coalesced,8,14,long,576,1518,82003,427200
+swi,2,coalesced,8,15,double,448,1518,266650,427200
+swi,2,coalesced,8,16,float,128,1518,74331,427200
+swi,2,coalesced,8,16,int,224,1518,75216,427200
+swi,2,coalesced,8,16,long,672,1518,84219,427200
+swi,2,coalesced,8,16,signed char,112,1518,67584,427200
+swi,2,coalesced,8,186,float,1488,1518,131768,427200
+swi,2,coalesced,8,187,float,1504,1518,130011,427200
+swi,2,coalesced,8,1,double,0,1518,80741,427200
+swi,2,coalesced,8,1,float,16,1518,69588,427200
+swi,2,coalesced,8,1,int,0,1518,69461,427200
+swi,2,coalesced,8,1,long,0,1518,69327,427200
+swi,2,coalesced,8,1,signed char,0,1518,66748,427200
+swi,2,coalesced,8,26,long,1152,1518,95346,427200
+swi,2,coalesced,8,27,long,1248,1518,97354,427200
+swi,2,coalesced,8,2,double,0,1518,80739,427200
+swi,2,coalesced,8,2,float,16,1518,69605,427200
+swi,2,coalesced,8,2,int,0,1518,69531,427200
+swi,2,coalesced,8,2,long,0,1518,69301,427200
+swi,2,coalesced,8,2,signed char,0,1518,66690,427200
+swi,2,coalesced,8,32,float,256,1518,79783,427200
+swi,2,coalesced,8,32,int,480,1518,82325,427200
+swi,2,coalesced,8,32,signed char,240,1518,68573,427200
+swi,2,coalesced,8,4,double,64,1518,106325,427200
+swi,2,coalesced,8,4,float,32,1518,70427,427200
+swi,2,coalesced,8,4,int,32,1518,70322,427200
+swi,2,coalesced,8,4,long,96,1518,71349,427200
+swi,2,coalesced,8,4,signed char,16,1518,66895,427200
+swi,2,coalesced,8,62,int,960,1518,94859,427200
+swi,2,coalesced,8,63,int,992,1518,95752,427200
+swi,2,coalesced,8,64,float,512,1518,90517,427200
+swi,2,coalesced,8,64,signed char,496,1518,70596,427200
+swi,2,coalesced,8,8,double,192,1518,164465,427200
+swi,2,coalesced,8,8,float,64,1518,71827,427200
+swi,2,coalesced,8,8,int,96,1518,72028,427200
+swi,2,coalesced,8,8,long,288,1518,75829,427200
+swi,2,coalesced,8,8,signed char,48,1518,67054,427200
+swi,2,coalesced,8,8,signed char,0,1518,63704,427200
