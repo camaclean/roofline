@@ -12,7 +12,7 @@ fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 #plt.title("Arria 10 Power Roofline: Floating Point Unrolling")
 plt.suptitle("Arria 10 Power Roofline", size='xx-large')
-plt.title("Floating Point Unrolling")
+plt.title("Data Type Efficiency Increasing AI")
 whatx = ErtLog.max_power
 whaty = ErtLog.max_gflops
 
