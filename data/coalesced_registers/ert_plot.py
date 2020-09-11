@@ -266,8 +266,8 @@ def size_format_scale_iec_bytes(x,pos):
 
 
 def power_line(power, fstring="%s GFLOP/Joule"):
-    x = np.linspace(1,512,100)
-    y = power*x+power
+    x = np.linspace(1,512,1000,dtype=float)
+    y = float(power)*x+float(power)
     #plt.annotate('%s GFLOP/Joule' % power, xy=(17,power*16), xycoords='data')
     powerl = fractions(power,0)
     ret = plt.loglog(x,y,'--', basex=2, basey=2, color='0.5', label=fstring % powerl)
