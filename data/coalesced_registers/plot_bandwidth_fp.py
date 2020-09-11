@@ -34,7 +34,6 @@ ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(size_format_scale_i
 ax.set_ylabel('GB/s')
 ax.set_xlabel('Spatial Locality')
 plt.xticks(rotation=-45,ha='left')
-ax.legend([u1[0],u2[0],u4[0],u8[0],u16[0],u32[0],u64[0]],['1','2','4','8','16','32','64'], loc='upper left', title='Unrolls')
+ax.legend([u1[0],u2[0],u4[0],u8[0],u16[0],u32[0],u64[0],u128[0]],['1','2','4','8','16','32','64','128'], loc='upper left', title='Unrolls')
 fig.subplots_adjust(bottom=0.18)
-#plt.tight_layout()
 plt.savefig('fp_bandwidth.png', dpi=500)

@@ -117,7 +117,10 @@ class ErtTrial:
     def gflops(self):
         return self.m_gflops
     def power(self):
-        return self.m_power
+        if len(self.m_power) > 0:
+            return self.m_power
+        else:
+            return None
     def __str__(self):
         return "<ErtTrial nsize: %d, iterations: %d, microseconds: %f, bytes: %d, ops: %d, GB/s: %f, GF/s: %f>" % (self.m_nsize, self.m_iterations, self.m_microseconds, self.m_bytes, self.m_ops, self.m_bandwidth, self.m_gflops)
     def add_power_datapoint(self, p):
@@ -172,7 +175,7 @@ class ErtLog:
         return self.m_ert_flops
     def ai(self):
         dtype_bytes = dtype_sizes[self.m_dtype]
-        return self.m_ert_flops/float(dtype_bytes)
+        return self.m_ert_flops/float(dtype_bytes)/2.0
     def dtype(self):
         return self.m_dtype
     def max_bandwidth(self):
@@ -245,8 +248,11 @@ def plot_trials(device, kernel_type, buffers, queue_type, unroll, ert_flop, dtyp
     data_x=[]
     data_y=[]
     for t in el.trials():
-        data_x.append(whatx(t))
-        data_y.append(whaty(t))
+        dx = whatx(t)
+        dy = whaty(t)
+        if dx is not None and dy is not None:
+            data_x.append(dx)
+            data_y.append(dy)
     return graphtype(data_x, data_y, linetype, **kwargs)
 
 def fractions(x,pos):
@@ -259,10 +265,10 @@ def size_format_scale_iec_bytes(x,pos):
     return size_format.size_format(x, units=size_format.iec_bytes)
 
 
-def power_line(power):
+def power_line(power, fstring="%s GFLOP/Joule"):
     x = np.linspace(1,512,100)
     y = power*x+power
     #plt.annotate('%s GFLOP/Joule' % power, xy=(17,power*16), xycoords='data')
     powerl = fractions(power,0)
-    ret = plt.loglog(x,y,'--', basex=2, basey=2, color='0.5', label="%s GFLOP/Joule" % powerl)
+    ret = plt.loglog(x,y,'--', basex=2, basey=2, color='0.5', label=fstring % powerl)
     return ret
