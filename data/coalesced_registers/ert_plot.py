@@ -197,7 +197,7 @@ class ErtLog:
                 m = mp
         return m
 
-def plot_res_power(df, device, kernel_type, buffers, queue_type, unroll, dtype, linetype):
+def plot_res_power(df, device, kernel_type, buffers, queue_type, unroll, dtype, linetype, ax=None):
     data_x=[]
     data_y=[]
     ff = df[df.kernel_type.eq(kernel_type) & df.buffers.eq(buffers) & df.queue_type.eq(queue_type) & df.unroll.eq(unroll) & df.dtype.eq(dtype)].sort_values(by=['ert_flop'])
@@ -215,7 +215,10 @@ def plot_res_power(df, device, kernel_type, buffers, queue_type, unroll, dtype, 
             res = res2
         data_x.append(res)
         data_y.append(el.max_power())
-    return plt.plot(data_x, data_y, linetype)
+    if ax is not None:
+        return ax.plot(data_x, data_y, linetype)
+    else:
+        return plt.plot(data_x, data_y, linetype)
 
 def plot_ert(device, kernel_type, buffers, queue_type, unroll, dtype, linetype, whatx, whaty, ax=None):
     files={}
