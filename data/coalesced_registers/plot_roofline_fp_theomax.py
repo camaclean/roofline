@@ -13,14 +13,6 @@ ax = fig.add_subplot(1,1,1)
 #plt.title("Arria 10 Roofline: Floating Point Unrolling")
 plt.suptitle("Arria 10 Roofline", size='xx-large')
 plt.title("Floating Point Unrolling")
-whatx = ErtLog.ai
-whaty = ErtLog.max_gflops
-u1 = plot_ert(device, 'swi', 1, 'coalesced', 1, 'float', 'ro--', whatx=whatx, whaty=whaty)
-u2 = plot_ert(device, 'swi', 1, 'coalesced', 2, 'float', 'bo--', whatx=whatx, whaty=whaty)
-u4 = plot_ert(device, 'swi', 1, 'coalesced', 4, 'float', 'go--', whatx=whatx, whaty=whaty)
-u8 = plot_ert(device, 'swi', 1, 'coalesced', 8, 'float', 'co--', whatx=whatx, whaty=whaty)
-u16 = plot_ert(device, 'swi', 1, 'coalesced', 16, 'float', 'mo--', whatx=whatx, whaty=whaty)
-u32 = plot_ert(device, 'swi', 1, 'coalesced', 32, 'float', 'yo--', whatx=whatx, whaty=whaty)
 
 fmax=386*1000*1000
 dsps=1518
@@ -46,7 +38,17 @@ def roofline(x):
 x3 = np.linspace(1/8.0,dsps/4.0,30000,dtype=float)
 np_roofline = np.vectorize(roofline)
 y3 = np_roofline(x3)
-max3 = plt.plot(x3,y3,'-', color='0.0') #label=fstring % powerl)
+max3 = plt.plot(x3,y3,'-', color='0.0', linewidth=4) #label=fstring % powerl)
+
+whatx = ErtLog.ai
+whaty = ErtLog.max_gflops
+u1 = plot_ert(device, 'swi', 1, 'coalesced', 1, 'float', 'ro--', whatx=whatx, whaty=whaty)
+u2 = plot_ert(device, 'swi', 1, 'coalesced', 2, 'float', 'bo--', whatx=whatx, whaty=whaty)
+u4 = plot_ert(device, 'swi', 1, 'coalesced', 4, 'float', 'go--', whatx=whatx, whaty=whaty)
+u8 = plot_ert(device, 'swi', 1, 'coalesced', 8, 'float', 'co--', whatx=whatx, whaty=whaty)
+u16 = plot_ert(device, 'swi', 1, 'coalesced', 16, 'float', 'mo--', whatx=whatx, whaty=whaty)
+u32 = plot_ert(device, 'swi', 1, 'coalesced', 32, 'float', 'yo--', whatx=whatx, whaty=whaty)
+
 plt.locator_params(axis='x', numticks=12)
 ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(fractions))
 ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(fractions))
