@@ -39,7 +39,7 @@ def plot_ert_rooflines(ax):
     plot_ert_resource_roofline(device, 'swi', 1, 'coalesced', unrolls, 'long', whaty=ErtLog.max_gflops, ax=ax, linetype='c-', linewidth=1, zorder=30)
     plot_ert_resource_roofline(device, 'swi', 1, 'coalesced', unrolls, 'signed_char', whaty=ErtLog.max_gflops, ax=ax, linetype='m-', linewidth=1, zorder=30)
 
-plot_measured_roofline = False
+plot_measured_roofline = True
 if plot_measured_roofline:
     plot_ert_rooflines(ax1)
 
@@ -65,4 +65,4 @@ ax2.legend([f16[0],d8[0],i16[0],l8[0],sc64[0]],['float (unroll=16)','double (unr
 plt.subplots_adjust(hspace=0.24,left=0.1,right=0.95,top=0.9,bottom=0.06, wspace=0)
 #fig.set_constrained_layout_pads(hspace=0.30)
 
-plt.savefig('roofline_types_combined.png', dpi=500)
+plt.savefig('roofline_types_combined_ert.png', dpi=500)

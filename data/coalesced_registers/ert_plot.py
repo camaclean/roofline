@@ -241,6 +241,36 @@ def plot_ert(device, kernel_type, buffers, queue_type, unroll, dtype, linetype, 
     else:
         return plt.loglog(data_x, data_y, linetype, basex=2, basey=2)
 
+def get_max_ert_flops_log(device, kernel_type, buffers, queue_type, unroll, dtype):
+    files={}
+    for filepath in glob.iglob(r'logs/%s_%s_%s_%s_%d_*_%s.log' % (device, kernel_type, buffers, queue_type, unroll, dtype)):
+        m = re.search(r'%s_%s_%s_%s_%d_(?P<ert_flops>[0-9]+)_(?P<dtype>\w+)\.log' % (device, kernel_type, buffers, queue_type, unroll), filepath)
+        ert_flops = int(m.group('ert_flops'))
+        powerpath = 'logs/%s_%s_%s_%s_%d_%s_%s.power.log' % (device, kernel_type, buffers, queue_type, unroll, ert_flops, dtype)
+        files[ert_flops] = (filepath, powerpath)
+    if len(files) == 0:
+        return
+    max_ert_flops = max(files)
+    (filepath, powerpath) = files[max_ert_flops]
+    el = ErtLog(filepath, powerpath)
+    return el
+
+def plot_ert_resource_roofline(device, kernel_type, buffers, queue_type, unrolls, dtype, linetype='-', whatx=ErtLog.ai, whaty=ErtLog.max_gflops, ax=None, **kwargs):
+    data_x=[]
+    data_y=[]
+    print(dtype)
+    for u in unrolls:
+        el = get_max_ert_flops_log(device, kernel_type, buffers, queue_type, u, dtype)
+        if el is not None:
+            print("%f %f" % (el.ert_flops(), whaty(el)))
+            data_x.append(whatx(el))
+            data_y.append(whaty(el))
+
+    if ax is not None:
+        return ax.plot(data_x, data_y, linetype, **kwargs)
+    else:
+        return plt.plot(data_x, data_y, linetype, **kwargs)
+
 def plot_trials(device, kernel_type, buffers, queue_type, unroll, ert_flop, dtype, linetype, whatx, whaty, graphtype=plt.plot, **kwargs):
     filepath = 'logs/%s_%s_%s_%s_%d_%s_%s.log' % (device, kernel_type, buffers, queue_type, unroll, ert_flop, dtype)
     powerpath = 'logs/%s_%s_%s_%s_%d_%s_%s.power.log' % (device, kernel_type, buffers, queue_type, unroll, ert_flop, dtype)
