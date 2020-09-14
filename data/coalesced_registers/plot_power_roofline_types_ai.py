@@ -6,13 +6,22 @@ import matplotlib
 import numpy as np
 from ert_plot import *
 
-device='pac_a10'
+import configparser
+
+config = configparser.ConfigParser()
+config.read("settings.ini")
+
+resource_roofline = config['DEFAULT'].getboolean('resource_roofline', True)
+draw_title = config['DEFAULT'].getboolean('title', True)
+device = config['DEFAULT'].get('device','pac_a10')
 
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 #plt.title("Arria 10 Power Roofline: Floating Point Unrolling")
-plt.suptitle("Arria 10 Power Roofline", size='xx-large')
-plt.title("Data Type Efficiency Increasing AI")
+if draw_title:
+    plt.suptitle("Arria 10 Power Roofline", size='xx-large')
+    plt.title("Data Type Efficiency Increasing AI")
+
 whatx = ErtLog.max_power
 whaty = ErtLog.max_gflops
 
@@ -47,4 +56,6 @@ labelLines(plt.gca().get_lines(), xvals=(labeloffset,labeloffset,labeloffset,lab
 ax.legend([f1[0],d1[0],i1[0],l1[0],sc1[0]],['float','double','int32','int64','int8'], loc='lower right', title='Data types')
 plt.xlim(1,256)
 plt.ylim(1/8.0,2048)
+if not draw_title:
+    plt.tight_layout()
 plt.savefig('roofline_power_types_ai.png', dpi=500)

@@ -5,14 +5,22 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 from ert_plot import *
+import configparser
 
-device='pac_a10'
+config = configparser.ConfigParser()
+config.read("settings.ini")
 
-fig = plt.figure()
+resource_roofline = config['DEFAULT'].getboolean('resource_roofline', True)
+draw_title = config['DEFAULT'].getboolean('title', True)
+device = config['DEFAULT'].get('device','pac_a10')
+
+figsize=(8,5)
+fig = plt.figure(figsize=figsize)
 ax = fig.add_subplot(1,1,1)
 #plt.title("Arria 10 Roofline: Floating Point Unrolling")
-plt.suptitle("Arria 10 Roofline", size='xx-large')
-plt.title("Floating Point Unrolling")
+if draw_title:
+    plt.suptitle("Arria 10 Roofline", size='xx-large')
+    plt.title("Floating Point Unrolling")
 
 fmax=386*1000*1000
 dsps=1518
@@ -41,8 +49,7 @@ np_roofline = np.vectorize(roofline)
 y3 = np_roofline(x3)
 #max3 = plt.plot(x3,y3,'-', color='0.0', linewidth=4) #label=fstring % powerl)
 
-plot_measured_roofline = True
-if plot_measured_roofline:
+if resource_roofline:
     unrolls=[1,2,4,8,16,32,64,128,256,512]
     plot_ert_resource_roofline(device, 'swi', 1, 'coalesced', unrolls, 'float', whaty=ErtLog.max_gflops, color='0.0', linewidth=3, zorder=30)
 
@@ -65,4 +72,6 @@ ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(fractions))
 ax.set_ylabel('GF/s')
 ax.set_xlabel('AI')
 ax.legend([u1[0],u2[0],u4[0],u8[0],u16[0],u32[0],u64[0],u128[0],u256[0],u512[0]],['1','2','4','8','16','32','64','128','256','512'], loc='lower right', title='Unrolls')
+if not draw_title:
+    plt.tight_layout()
 plt.savefig('roofline_1_theoretical_real_max.png', dpi=500)

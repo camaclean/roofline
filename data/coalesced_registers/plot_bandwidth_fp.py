@@ -12,12 +12,12 @@ device='pac_a10'
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 #plt.title("Arria 10 Roofline: Floating Point Unrolling")
-plt.suptitle("Arria 10 Roofline", size='xx-large')
-plt.title("Floating Point Unrolling")
+plt.suptitle("Arria 10 ERT Spatial Locality", size='xx-large')
+plt.title("Float32")
 whatx = ErtTrial.nsize
 whaty = ErtTrial.bandwidth
 ert_flop=1
-bufs=1
+bufs=2
 u1 = plot_trials(device, 'swi', bufs, 'coalesced', 1, ert_flop, 'float', 'ro--', whatx=whatx, whaty=whaty)
 u2 = plot_trials(device, 'swi', bufs, 'coalesced', 2, ert_flop, 'float', 'bo--', whatx=whatx, whaty=whaty)
 u4 = plot_trials(device, 'swi', bufs, 'coalesced', 4, ert_flop, 'float', 'go--', whatx=whatx, whaty=whaty)

@@ -258,11 +258,9 @@ def get_max_ert_flops_log(device, kernel_type, buffers, queue_type, unroll, dtyp
 def plot_ert_resource_roofline(device, kernel_type, buffers, queue_type, unrolls, dtype, linetype='-', whatx=ErtLog.ai, whaty=ErtLog.max_gflops, ax=None, **kwargs):
     data_x=[]
     data_y=[]
-    print(dtype)
     for u in unrolls:
         el = get_max_ert_flops_log(device, kernel_type, buffers, queue_type, u, dtype)
         if el is not None:
-            print("%f %f" % (el.ert_flops(), whaty(el)))
             data_x.append(whatx(el))
             data_y.append(whaty(el))
 
