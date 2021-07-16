@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -e
+#    [ -z "${els_per_bank}" ] && name="swi_${buffer}_coalesced_${unroll}_${comp}_${type}" || name="swi_${buffer}_coalesced_${unroll}_${els_per_bank}_${comp}_${type}"
+parse_name()
+{
+    local kerntype buffers queuetype unroll flops els_per_bank dtype
+    if [[ $1 =~ (ndrange|swi)_([0-9]+)_(coalesced|queued)_([0-9]+)_([0-9]+)_(.*).aocx ]]; then
+	kerntype=${BASH_REMATCH[1]}
+	buffers=${BASH_REMATCH[2]}
+	queuetype=${BASH_REMATCH[3]}
+	unroll=${BASH_REMATCH[4]}
+	flops=${BASH_REMATCH[5]}
+	els_per_bank=0
+	dtype=${BASH_REMATCH[6]}
+        echo $kerntype,$buffers,$queuetype,$unroll,$flops,$els_per_bank,$dtype
+    fi
+    if [[ $aocx =~ (ndrange|swi)_local_(coalesced|queued)_([0-9]+)_([0-9]+)_([0-9]+)_(.*).aocx ]]; then
+	kerntype=${BASH_REMATCH[1]}
+	buffers=0
+	queuetype=${BASH_REMATCH[2]}
+	unroll=${BASH_REMATCH[3]}
+	flops=${BASH_REMATCH[4]}
+	els_per_bank=${BASH_REMATCH[5]}
+	dtype=${BASH_REMATCH[6]}
+        echo $kerntype,$buffers,$queuetype,$unroll,$flops,$els_per_bank,$dtype
+    fi
+}
+defaultfile="${0%.sh}.csv"
+outfile=${1:-${defaultfile}}
+header="Kernel Type, Buffers, Queue Type, Unroll, ERT FLOPs, Elements per Bank, Data Type, Frequency (MHz), DSP blocks, LUTs"
+echo $header >$outfile
+echo $header >/dev/stderr
+for aocx in *.aocx; do
+    freq=$(strings $aocx | grep -oP 'Kernel fmax: \K\S+')
+    dsp=$(strings $aocx | grep -oP 'DSP blocks: \K\S+' | sed -e 's/,//g')
+    luts=$(strings $aocx | grep -oP 'Logic utilization: \K\S+' | sed -e 's/,//g')
+    echo $(parse_name $aocx),$freq,$dsp,$luts >>$outfile
+    echo $(parse_name $aocx),$freq,$dsp,$luts >>/dev/stderr
+done

@@ -1,0 +1,47 @@
+#!/bin/bash
+#PBS -l walltime=72:00:00
+#PBS -l nodes=1:ppn=4
+#PBS -V
+#PBS -N roofline
+#PBS -m ea
+#PBS -M ColinMacLean@lbl.gov
+
+. /opt/source-intelpac.sh
+
+set -xeu
+
+declare -A typesize=( [float]=4 [double]=8 [int]=4 [long]=8 )
+
+if [ -z "${els_per_bank}" ]; then
+    name="swi_${buffer}_coalesced_${unroll}_${comp}_${type}"
+    els_per_bank=1
+else
+    name="swi_${buffer}_coalesced_${unroll}_${els_per_bank}_${comp}_${type}"
+fi
+
+[ $buffer -eq 2 ] && file="kernel_coalesced.cl"
+[ $buffer -eq 1 ] && file="kernel_coalesced_1.cl"
+[[ $buffer == "local" ]] && file="kernel_coalesced_local.cl"
+
+cd ${build_path:-$PBS_O_WORKDIR}
+
+bankwidth=$((${typesize[$type]}*${els_per_bank}))
+numbanks=$((${unroll}/${els_per_bank}))
+
+#opts="-no-interleaving=DDR  -cl-mad-enable -cl-no-signed-zeros -cl-denorms-are-zero -cl-unsafe-math-optimizations -fp-relaxed -cl-fast-relaxed-math -fpc -profile=all -v -v -DERT_FLOP=$comp -DTYPE=$type -DUNROLL=$unroll"
+opts="-O3 -cl-mad-enable -cl-no-signed-zeros -cl-denorms-are-zero -cl-unsafe-math-optimizations -fp-relaxed -cl-fast-relaxed-math -profile=all -v -v -DERT_FLOP=$comp -DTYPE=$type -DUNROLL=$unroll -DBANKWIDTH=$bankwidth -DNUMBANKS=${numbanks}"
+[ $buffer -eq 2 ] && opts="-no-interleaving=DDR $opts"
+#opts="-profile=all -v -v -DERT_FLOP=$comp -DTYPE=$type -DUNROLL=$unroll"
+
+echo "Compiling $name"
+
+if [ ! -f $name.aoco ]; then
+    [ -d $name ] && rm -r $name
+
+    aoc -c $opts ${file} -o ${name}
+fi
+if [ -z "${firststage_only:-}" ]; then
+    if [ ! -f $name.aocx ]; then
+	aoc $opts $name.aoco
+    fi
+fi

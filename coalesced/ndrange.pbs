@@ -1,0 +1,40 @@
+#!/bin/bash
+#PBS -l walltime=72:00:00
+#PBS -l nodes=1:ppn=16
+#PBS -V
+#PBS -N roofline
+#PBS -m ea
+#PBS -M ColinMacLean@lbl.gov
+
+. /opt/source-intelpac.sh
+
+set -xeu
+
+declare -A typesize=( [float]=4 [double]=8 [int]=4 [long]=8 )
+
+if [ -z "${els_per_bank}" ]; then
+    els_per_bank=1
+fi
+
+file="kernel_ndrange_${buffer}.cl"
+
+cd ${build_path:-$PBS_O_WORKDIR}
+
+bankwidth=$((${typesize[$type]}*${els_per_bank}))
+numbanks=$((${simd}/${els_per_bank}))
+
+opts="-O3 -cl-mad-enable -cl-no-signed-zeros -cl-denorms-are-zero -cl-unsafe-math-optimizations -fp-relaxed -cl-fast-relaxed-math -profile=all -v -v -DERT_FLOP=$comp -DTYPE=$type -DSIMD=$simd -DBANKWIDTH=$bankwidth -DNUMBANKS=${numbanks}"
+[ $buffer -eq 2 ] && opts="-no-interleaving=DDR $opts"
+
+echo "Compiling $name"
+
+if [ ! -f $name.aoco ]; then
+    [ -d $name ] && rm -r $name
+
+    aoc -c $opts ${file} -o ${name}
+fi
+if [ -z "${firststage_only:-}" ]; then
+    if [ ! -f $name.aocx ]; then
+	aoc $opts $name.aoco
+    fi
+fi
